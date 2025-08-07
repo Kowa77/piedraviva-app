@@ -1,0 +1,124 @@
+/* src/app/app.component.css */
+
+.app-header {
+  background-color: #c53030; /* bg-red-700 */
+  color: #fff;
+  padding: 1rem 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-family: sans-serif;
+}
+
+.header-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+  gap: 1rem; /* Espacio entre elementos */
+}
+
+.app-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  flex-shrink: 0; /* Evita que el título se encoja */
+}
+
+.main-nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: #fbd38d; /* text-yellow-300 */
+}
+
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-email {
+  font-weight: 600;
+  color: #f6e05e; /* text-yellow-400 */
+}
+
+/* Estilos para el icono del carrito */
+.cart-icon-link {
+  color: #fff; /* Color blanco */
+  font-size: 2rem; /* Tamaño del icono AUMENTADO */
+  transition: color 0.2s ease, transform 0.2s ease;
+  padding: 0.5rem; /* Espacio alrededor para facilitar el clic */
+  border-radius: 0.25rem; /* Ligeramente redondeado */
+}
+
+.cart-icon-link:hover {
+  color: #fbd38d; /* Color amarillo al pasar el ratón */
+  transform: scale(1.1); /* Ligeramente más grande al pasar el ratón */
+}
+
+.login-button,
+.logout-button {
+  background-color: #f6e05e; /* bg-yellow-400 */
+  color: #1a202c; /* text-gray-900 */
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-button:hover,
+.logout-button:hover {
+  background-color: #ecc94b; /* Un amarillo un poco más oscuro */
+  transform: translateY(-1px);
+}
+
+.login-button:active,
+.logout-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.app-main-content {
+  flex-grow: 1; /* Permite que el contenido principal ocupe el espacio restante */
+}
+
+.app-footer {
+  background-color: #1a202c; /* bg-gray-900 */
+  color: #a0aec0; /* text-gray-400 */
+  text-align: center;
+  padding: 1.5rem 2rem;
+  font-size: 0.9rem;
+}
+
+/* Media Queries para responsividad */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .main-nav, .auth-section {
+    width: 100%;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  .app-title {
+    text-align: center;
+    width: 100%;
+  }
+}

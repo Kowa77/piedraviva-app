@@ -1,0 +1,303 @@
+/* src/app/components/shopping-cart/shopping-cart.component.css */
+
+.cart-main-container {
+  min-height: 100vh;
+  background-color: #1a202c; /* bg-gray-900 */
+  color: #e2e8f0; /* text-gray-100 */
+  padding: 2rem;
+  font-family: sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cart-content-wrapper {
+  max-width: 800px; /* Ancho máximo para el carrito */
+  width: 100%;
+  margin: 0 auto;
+  background-color: #2d3748; /* bg-gray-800 */
+  border-radius: 0.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  padding: 2rem;
+  position: relative;
+}
+
+.back-button-container {
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  display: inline-block;
+  background-color: #4a5568; /* bg-gray-700 */
+  color: #e2e8f0; /* text-gray-100 */
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #64748b; /* bg-gray-600 */
+}
+
+/* Estilos para el contenedor del logo */
+.company-logo-container {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.company-logo {
+  max-width: 150px;
+  height: auto;
+  display: inline-block;
+}
+
+.cart-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #f6e05e; /* text-yellow-400 */
+  font-family: 'Pacifico', cursive; /* Usa la misma fuente artística */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.cart-items-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.cart-item-card {
+  display: flex;
+  align-items: center;
+  background-color: #1a202c; /* bg-gray-900 */
+  border-radius: 0.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+}
+
+.cart-item-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 0.375rem;
+  object-fit: cover;
+  flex-shrink: 0; /* Evita que la imagen se encoja */
+}
+
+.item-details {
+  flex-grow: 1; /* Permite que los detalles ocupen el espacio restante */
+}
+
+.item-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+
+.item-price {
+  font-size: 1rem;
+  color: #a0aec0; /* text-gray-300 */
+}
+
+.item-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0; /* Evita que los controles se encojan */
+  margin-top: 0.5rem; /* Espacio para móviles */
+  width: 100%; /* Ocupa todo el ancho en móviles */
+  justify-content: center; /* Centra los controles en móviles */
+}
+
+@media (min-width: 640px) { /* sm: */
+  .item-controls {
+    width: auto; /* Vuelve al ancho automático en pantallas más grandes */
+    margin-top: 0;
+    justify-content: flex-start; /* Alinea a la izquierda en pantallas más grandes */
+  }
+}
+
+.item-quantity-input {
+  width: 60px;
+  padding: 0.5rem;
+  border: 1px solid #4a5568;
+  border-radius: 0.375rem;
+  background-color: #2d3748;
+  color: #e2e8f0;
+  font-size: 1rem;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.item-quantity-input::-webkit-outer-spin-button,
+.item-quantity-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Nuevo estilo para el botón Guardar */
+.save-item-button {
+  background-color: #48bb78; /* Un verde para guardar */
+  color: #1a202c; /* Texto oscuro */
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-item-button:hover {
+  background-color: #38a169; /* Verde más oscuro al hover */
+}
+
+.remove-item-button {
+  background-color: #e53e3e; /* bg-red-600 */
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.remove-item-button:hover {
+  background-color: #c53030; /* bg-red-700 */
+}
+
+.item-subtotal {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f6e05e; /* text-yellow-400 */
+  flex-shrink: 0;
+  margin-left: auto; /* Empuja el subtotal a la derecha */
+}
+
+@media (max-width: 639px) { /* Ajuste para pantallas muy pequeñas */
+  .cart-item-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .item-details {
+    width: 100%;
+  }
+  .item-subtotal {
+    margin-left: 0; /* Elimina el margen automático en móviles */
+    width: 100%; /* Ocupa todo el ancho */
+    text-align: right; /* Alinea el total a la derecha */
+    margin-top: 0.5rem;
+  }
+}
+
+
+.cart-summary {
+  background-color: #1a202c; /* bg-gray-900 */
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.total-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.total-amount {
+  color: #f6e05e; /* text-yellow-400 */
+  font-size: 2rem;
+}
+
+.checkout-button {
+  width: 100%;
+  background-color: #48bb78; /* bg-green-500 */
+  color: #1a202c; /* text-gray-900 */
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.checkout-button:hover {
+  background-color: #38a169; /* bg-green-600 */
+  transform: translateY(-2px);
+}
+
+.checkout-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.empty-cart-message,
+.loading-message-cart {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.25rem;
+  color: #a0aec0;
+}
+
+.back-to-menu-button {
+  display: inline-block;
+  margin-top: 1.5rem;
+  background-color: #c53030;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.back-to-menu-button:hover {
+  background-color: #a02020;
+}
+
+/* Nuevo estilo para el contenedor del botón de historial de compras */
+.purchase-history-button-container {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.view-history-button {
+  background-color: #007bff; /* Un azul para el botón de historial */
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.view-history-button:hover {
+  background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
+  transform: translateY(-1px);
+}
+
+.view-history-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}

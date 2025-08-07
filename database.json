@@ -1,0 +1,36 @@
+{
+  "pizzas": {
+    "pizza1": {
+      "id": "pizza1",
+      "nombre": "Pizza Margarita",
+      "descripcion": "La clásica pizza con tomate, mozzarella y albahaca fresca.",
+      "precio": 12.50,
+      "sabores": ["Tomate", "Mozzarella", "Albahaca"],
+      "imagenUrl": "https://placehold.co/600x400/FFF/000?text=Margarita"
+    },
+    "pizza2": {
+      "id": "pizza2",
+      "nombre": "Pizza Pepperoni",
+      "descripcion": "Una deliciosa combinación de pepperoni, mozzarella y salsa de tomate.",
+      "precio": 14.00,
+      "sabores": ["Pepperoni", "Tomate", "Mozzarella"],
+      "imagenUrl": "https://placehold.co/600x400/FFF/000?text=Pepperoni"
+    },
+    "pizza3": {
+      "id": "pizza3",
+      "nombre": "Pizza Cuatro Quesos",
+      "descripcion": "Una mezcla rica de cuatro quesos: mozzarella, gorgonzola, parmesano y provolone.",
+      "precio": 15.50,
+      "sabores": ["Mozzarella", "Gorgonzola", "Parmesano", "Provolone"],
+      "imagenUrl": "https://placehold.co/600x400/FFF/000?text=Cuatro+Quesos"
+    },
+    "pizza4": {
+      "id": "pizza4",
+      "nombre": "Pizza Hawaiana",
+      "descripcion": "La controvertida pero popular pizza con jamón, piña y mozzarella.",
+      "precio": 13.00,
+      "sabores": ["Jamón", "Piña", "Mozzarella"],
+      "imagenUrl": "https://placehold.co/600x400/FFF/000?text=Hawaiana"
+    }
+  }
+}

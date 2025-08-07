@@ -1,0 +1,50 @@
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <button class="close-button" (click)="onClose()">×</button>
+
+    <h2 class="modal-title">
+      {{ isLoginMode ? 'Iniciar Sesión' : 'Registrarse' }}
+    </h2>
+
+    <form (ngSubmit)="onSubmit()" class="auth-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="email"
+          required
+          autocomplete="email"
+          placeholder="tu@email.com">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="password"
+          required
+          autocomplete="current-password"
+          placeholder="••••••••">
+      </div>
+
+      <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
+      <button type="submit" class="submit-button" [disabled]="loading">
+        {{ loading ? 'Cargando...' : (isLoginMode ? 'Iniciar Sesión' : 'Registrarse') }}
+      </button>
+    </form>
+
+    <div class="toggle-mode-section">
+      <p>
+        {{ isLoginMode ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?' }}
+        <a (click)="toggleMode()" class="toggle-link">
+          {{ isLoginMode ? 'Regístrate aquí' : 'Inicia sesión aquí' }}
+        </a>
+      </p>
+    </div>
+  </div>
+</div>

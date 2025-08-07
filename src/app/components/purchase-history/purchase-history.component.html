@@ -1,0 +1,67 @@
+<div class="history-main-container">
+  <div class="history-content-wrapper">
+
+    <!-- Botón de Volver al Carrito -->
+    <div class="back-button-container">
+      <a routerLink="/cart" class="back-button">← Volver al Carrito</a>
+    </div>
+
+    <!-- Contenedor del Logo de la Empresa -->
+    <div class="company-logo-container">
+      <img src="https://placehold.co/150x50/FFDDC1/000000?text=Tu+Logo" alt="Logo de la Empresa" class="company-logo">
+    </div>
+
+    <h1 class="history-title">Historial de Compras</h1>
+
+    @if (loading) {
+      <div class="loading-message-history">
+        <p>Cargando tu historial de compras...</p>
+      </div>
+    } @else {
+      <!-- Mueve 'as purchases' al @if principal que maneja el observable -->
+      @if (purchases$ | async; as purchases) {
+        @if (purchases.length > 0) {
+          <div class="purchases-grid">
+            @for (purchase of purchases; track purchase.purchaseId) {
+              <div class="purchase-card">
+                <div class="purchase-header">
+                  <span class="purchase-id">Compra ID: {{ purchase.purchaseId.substring(0, 8) }}...</span>
+                  <span class="purchase-date">{{ purchase.timestamp | date:'short' }}</span>
+                </div>
+                <div class="purchase-items-list">
+                  @for (item of purchase.items; track item.pizzaId) {
+                    <div class="purchase-item">
+                      <img [src]="item.imagenUrl || 'https://placehold.co/50x50/FF5733/FFFFFF?text=Pizza'"
+                           [alt]="item.nombre"
+                           class="purchase-item-image">
+                      <div class="purchase-item-details">
+                        <span class="purchase-item-name">{{ item.nombre }}</span>
+                        <span class="purchase-item-quantity">x{{ item.cantidad }}</span>
+                        <span class="purchase-item-price">{{ item.precio | currency:'UYU':'$':'1.2-2' }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+                <div class="purchase-total">
+                  <span>Total de la Compra:</span>
+                  <span class="total-amount">{{ purchase.total | currency:'UYU':'$':'1.2-2' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-history-message">
+            <p>No tienes compras registradas aún.</p>
+            <a routerLink="/" class="back-to-menu-button">Explorar Menú</a>
+          </div>
+        }
+      } @else {
+        <!-- Este 'else' se ejecutará si 'purchases$' emite null/undefined o un error después de la carga inicial -->
+        <div class="error-loading-history">
+          <p>Ocurrió un error al cargar el historial de compras.</p>
+        </div>
+      }
+    }
+
+  </div>
+</div>

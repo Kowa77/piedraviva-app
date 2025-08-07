@@ -1,0 +1,76 @@
+<div class="cart-main-container">
+  <div class="cart-content-wrapper">
+
+    <!-- Botón de Volver al Menú -->
+    <div class="back-button-container">
+      <a routerLink="/" class="back-button">← Seguir Comprando</a>
+    </div>
+
+    <!-- Contenedor del Logo de la Empresa -->
+    <div class="company-logo-container">
+      <img src="https://placehold.co/150x50/FFDDC1/000000?text=Tu+Logo" alt="Logo de la Empresa" class="company-logo">
+    </div>
+
+    <h1 class="cart-title">Tu Carrito de Compras</h1>
+
+    @if (cartItems$ | async; as items) {
+      @if (items.length > 0) {
+        <div class="cart-items-grid">
+          @for (item of items; track item.pizzaId) {
+            <div class="cart-item-card">
+              <img [src]="item.imagenUrl || 'https://placehold.co/100x100/FF5733/FFFFFF?text=Pizza'"
+                   [alt]="item.nombre"
+                   class="cart-item-image">
+              <div class="item-details">
+                <h2 class="item-name">{{ item.nombre }}</h2>
+                <p class="item-price">{{ item.precio | currency:'UYU':'$':'1.2-2' }}</p>
+              </div>
+              <div class="item-controls">
+                <input
+                  type="number"
+                  min="1"
+                  [value]="item.cantidad"
+                  (input)="onQuantityChange(item, $event)"
+                  class="item-quantity-input">
+
+                <!-- Botón de Guardar visible solo si la cantidad ha sido editada -->
+                @if (hasEditedQuantity(item)) {
+                  <button (click)="saveQuantity(item)" class="save-item-button">Guardar</button>
+                }
+
+                <button (click)="removeItem(item)" class="remove-item-button">Eliminar</button>
+              </div>
+              <span class="item-subtotal">{{ (item.precio * item.cantidad) | currency:'UYU':'$':'1.2-2' }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="cart-summary">
+          <div class="total-section">
+            <span>Total:</span>
+            <span class="total-amount">{{ (totalAmount$ | async) | currency:'UYU':'$':'1.2-2' }}</span>
+          </div>
+          <button (click)="checkout()" class="checkout-button">Comprar Ahora</button>
+        </div>
+
+      } @else {
+        <div class="empty-cart-message">
+          <p>Tu carrito está vacío. ¡Agrega algunas pizzas deliciosas!</p>
+          <a routerLink="/" class="back-to-menu-button">Ver Menú</a>
+        </div>
+      }
+    } @else {
+      <div class="loading-message-cart">
+        <p>Cargando tu carrito...</p>
+      </div>
+    }
+
+    <!-- Botón de Ver Historial de Compras (aparece después de una compra o si hay historial previo) -->
+    @if (showPurchaseHistoryButton) {
+      <div class="purchase-history-button-container">
+        <button (click)="viewPurchaseHistory()" class="view-history-button">Ver Historial de Compras</button>
+      </div>
+    }
+
+  </div>
+</div>

@@ -1,0 +1,78 @@
+<div class="main-container">
+  <div class="content-wrapper">
+
+    <!-- Encabezado del Menu -->
+    <header class="menu-header">
+      Menu Piedraviva
+    </header>
+
+    <!-- Contenedor del Logo de la Empresa para la pagina de lista -->
+    <div class="company-logo-container-list">
+      <!-- ¡RUTA CORREGIDA! Asegúrate de que logo.png esté en src/public/img/ -->
+      <img src="img/logo.png" alt="Logo de la Empresa" class="company-logo-list">
+    </div>
+
+    <!-- Contenedor principal de las pizzas con perspectiva para el efecto 3D -->
+    @if (pizzas$ | async; as pizzas) {
+      <div class="pizza-grid-container relative">
+        @if (pizzas.length > 0) {
+          <div class="pizza-grid">
+            @for (pizza of pizzas; track pizza.id) {
+              <div class="pizza-card-3d">
+
+                <!-- El enlace ahora envuelve solo la parte de la tarjeta que no es el boton de agregar al carrito -->
+                <a [routerLink]="['/pizza', pizza.id]" class="pizza-card-link-content">
+                  <!-- Imagen de la pizza -->
+                  <div class="pizza-image"
+                       [style.background-image]="'url(' + (pizza.imagenUrl || 'https://placehold.co/600x400/FF5733/FFFFFF?text=' + this.encodeURIComponent(pizza.nombre || 'Pizza')) + ')'">
+                  </div>
+                  <div class="pizza-details">
+                    <h2 class="pizza-name">{{ pizza.nombre }}</h2>
+                    <p class="pizza-description">
+                      {{ pizza.descripcion }}
+                    </p>
+                    <div class="pizza-footer">
+                      <!-- Usando el currency pipe con UYU y el símbolo $ -->
+                      <span class="pizza-price">
+                        {{ pizza.precio | currency:'UYU':'$':'1.2-2' }}
+                      </span>
+                      <div class="pizza-flavors">
+                        @for (sabor of pizza.sabores; track $index) {
+                          <span class="pizza-flavor-tag">
+                            {{ sabor }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </a>
+                <!-- Seccion de Cantidad y Boton "Agregar al Carrito" -->
+                <div class="add-to-cart-section">
+                  <input
+                    type="number"
+                    min="1"
+                    value="1"
+                    #quantityInput
+                    class="quantity-input"
+                    (change)="pizza.selectedQuantity = quantityInput.valueAsNumber">
+                  <button class="add-to-cart-button" (click)="addToCart(pizza, pizza.selectedQuantity || 1)">Agregar al Carrito</button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Plantilla que se muestra si no hay pizzas. -->
+          <div class="no-pizzas-message">
+            <p>Lo sentimos, no hay pizzas disponibles en este momento.</p>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Plantilla que se muestra mientras se cargan los datos. -->
+      <div class="loading-message">
+        <p>Cargando el menu de pizzas...</p>
+      </div>
+    }
+
+  </div>
+</div>
