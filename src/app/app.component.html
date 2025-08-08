@@ -1,7 +1,10 @@
 <!-- Aquí puedes tener un encabezado o navegación global -->
 <header class="app-header">
   <div class="header-content">
-    <h1 class="app-title">🍕 Menú Piedraviva</h1>
+    <h1 class="app-title">
+      <!-- El logo se ha movido fuera de aquí para ser un elemento fijo e independiente -->
+      🍕 Menú Piedraviva
+    </h1>
     <nav class="main-nav">
       <a routerLink="/" class="nav-link">Inicio</a>
       <!-- Puedes añadir más enlaces aquí si los necesitas -->
@@ -23,6 +26,9 @@
     </div>
   </div>
 </header>
+
+<!-- NUEVO: El logo fijo, posicionado directamente en el cuerpo para un control total -->
+<img src="piedraviva.png" alt="Logo de la Empresa" class="header-logo-fixed">
 
 <!-- Este es el punto clave: aquí es donde se cargará tu PizzaListComponent o PizzaDetailComponent -->
 <main class="app-main-content">

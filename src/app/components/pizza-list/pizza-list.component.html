@@ -6,11 +6,8 @@
       Menu Piedraviva
     </header>
 
-    <!-- Contenedor del Logo de la Empresa para la pagina de lista -->
-    <div class="company-logo-container-list">
-      <!-- ¡RUTA CORREGIDA! Asegúrate de que logo.png esté en src/public/img/ -->
-      <img src="img/logo.png" alt="Logo de la Empresa" class="company-logo-list">
-    </div>
+    <!-- REMOVIDO: Contenedor del Logo de la Empresa para la pagina de lista -->
+    <!-- El logo ahora está en app.component.html -->
 
     <!-- Contenedor principal de las pizzas con perspectiva para el efecto 3D -->
     @if (pizzas$ | async; as pizzas) {
@@ -48,14 +45,17 @@
                 </a>
                 <!-- Seccion de Cantidad y Boton "Agregar al Carrito" -->
                 <div class="add-to-cart-section">
-                  <input
-                    type="number"
-                    min="1"
-                    value="1"
-                    #quantityInput
-                    class="quantity-input"
-                    (change)="pizza.selectedQuantity = quantityInput.valueAsNumber">
-                  <button class="add-to-cart-button" (click)="addToCart(pizza, pizza.selectedQuantity || 1)">Agregar al Carrito</button>
+                  <div class="quantity-controls">
+                    <button (click)="decrementQuantity(pizza)" class="quantity-button minus-button">-</button>
+                    <input
+                      type="number"
+                      min="0"
+                      [value]="pizza.selectedQuantity || 0"
+                      (input)="onQuantityInputChange(pizza, $event)"
+                      class="quantity-input">
+                    <button (click)="incrementQuantity(pizza)" class="quantity-button plus-button">+</button>
+                  </div>
+                  <button class="add-to-cart-button" (click)="addToCart(pizza, pizza.selectedQuantity || 0)">Agregar al Carrito</button>
                 </div>
               </div>
             }

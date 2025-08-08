@@ -6,4 +6,6 @@ export interface Pizza {
   precio: number;
   sabores: string[];
   imagenUrl: string;
+  selectedQuantity?: number; // ¡NUEVA PROPIEDAD AÑADIDA! Es opcional (?), ya que no viene de Firebase directamente.
 }
+

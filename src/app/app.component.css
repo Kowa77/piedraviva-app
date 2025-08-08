@@ -6,6 +6,8 @@
   padding: 1rem 2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   font-family: sans-serif;
+  position: relative; /* Asegura que el header tenga un contexto de apilamiento si es necesario */
+  z-index: 999; /* Asegura que el header esté sobre el contenido principal */
 }
 
 .header-content {
@@ -23,7 +25,26 @@
   font-weight: 800;
   margin: 0;
   flex-shrink: 0; /* Evita que el título se encoja */
+  /* REMOVIDOS: display: flex y align-items, ya que el logo ya no está aquí */
 }
+
+/* NUEVO: Estilos para el logo fijo */
+.header-logo-fixed {
+  position: fixed; /* Hace que el elemento se quede pegado al viewport */
+  top: 20px;       /* Distancia desde la parte superior */
+  left: 20px;      /* Distancia desde la izquierda */
+  height: 200px;    /* Un tamaño razonable para un logo "pegatín" */
+  width: auto;     /* Mantiene la relación de aspecto */
+  z-index: 1000;   /* Asegura que esté por encima de todos los demás elementos */
+  border-radius: 50%; /* Bordes redondeados, como solicitaste */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Una sombra sutil */
+  transition: transform 0.2s ease-in-out; /* Transición suave para el hover */
+}
+
+.header-logo-fixed:hover {
+  transform: scale(1.1); /* Ligeramente más grande al pasar el ratón */
+}
+
 
 .main-nav {
   display: flex;
@@ -94,6 +115,8 @@
 
 .app-main-content {
   flex-grow: 1; /* Permite que el contenido principal ocupe el espacio restante */
+  /* Añadimos padding-top para que el contenido no quede debajo del header y el logo fijo */
+  padding-top: 80px; /* Ajusta este valor si el header o el logo son más grandes */
 }
 
 .app-footer {
@@ -120,5 +143,15 @@
   .app-title {
     text-align: center;
     width: 100%;
+  }
+
+  .header-logo-fixed {
+    height: 50px; /* Tamaño más pequeño para móviles */
+    top: 10px;
+    left: 10px;
+  }
+
+  .app-main-content {
+    padding-top: 100px; /* Más padding para pantallas más pequeñas si el header se envuelve */
   }
 }
