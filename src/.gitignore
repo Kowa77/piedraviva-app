@@ -199,3 +199,5 @@ firebase-debug.log.*
 *.vc.filters
 *.vcxproj.filters
 *.vcxproj.user
+# Archivos de configuración de entorno que no deben ser públicos
+/src/environments/
