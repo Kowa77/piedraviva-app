@@ -21,17 +21,19 @@
                 <p class="item-price">{{ item.precio | currency:'UYU':'$':'1.2-2' }}</p>
               </div>
               <div class="item-controls">
-                <input
-                  type="number"
-                  min="1"
-                  [value]="item.cantidad"
-                  (input)="onQuantityChange(item, $event)"
-                  class="item-quantity-input">
+                <!-- Controles de cantidad con botones integrados -->
+                <div class="quantity-stepper">
+                  <input
+                    type="number" min="0" [value]="item.cantidad === 0 ? '' : item.cantidad"
+                    (input)="onQuantityChange(item, $event)" (blur)="onQuantityBlur(item, $event)"
+                    class="item-quantity-input" />
+                  <div class="stepper-buttons">
+                    <button (click)="incrementQuantity(item)" class="stepper-button plus-button">+</button>
+                    <button (click)="decrementQuantity(item)" class="stepper-button minus-button">-</button>
+                  </div>
+                </div>
 
-                <!-- Botón de Guardar visible solo si la cantidad ha sido editada -->
-                @if (hasEditedQuantity(item)) {
-                  <button (click)="saveQuantity(item)" class="save-item-button">Guardar</button>
-                }
+                <!-- Botón de Guardar ELIMINADO -->
 
                 <button (click)="removeItem(item)" class="remove-item-button">Eliminar</button>
               </div>

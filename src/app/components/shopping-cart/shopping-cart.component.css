@@ -44,6 +44,17 @@
   background-color: #64748b; /* bg-gray-600 */
 }
 
+/* Estilos para el contenedor del logo */
+.company-logo-container {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.company-logo {
+  max-width: 150px;
+  height: auto;
+  display: inline-block;
+}
 
 .cart-title {
   font-size: 2.5rem;
@@ -114,16 +125,24 @@
   }
 }
 
+/* Nuevo Stepper de Cantidad Integrado */
+.quantity-stepper {
+  display: flex;
+  border: 1px solid #4a5568; /* Borde alrededor de todo el stepper */
+  border-radius: 0.375rem; /* rounded-md */
+  overflow: hidden; /* Asegura que los bordes internos no se vean */
+  background-color: #2d3748; /* Fondo del stepper */
+}
+
 .item-quantity-input {
-  width: 60px;
-  padding: 0.5rem;
-  border: 1px solid #4a5568;
-  border-radius: 0.375rem;
-  background-color: #2d3748;
+  width: 60px; /* Ancho ajustado */
+  padding: 0.5rem 0; /* Padding vertical, padding horizontal 0 */
+  border: none; /* Elimina el borde individual del input */
+  background-color: #1a202c; /* Fondo del input */
   color: #e2e8f0;
   font-size: 1rem;
   text-align: center;
-  -moz-appearance: textfield;
+  -moz-appearance: textfield; /* Para Firefox */
 }
 
 .item-quantity-input::-webkit-outer-spin-button,
@@ -131,6 +150,35 @@
   -webkit-appearance: none;
   margin: 0;
 }
+
+.stepper-buttons {
+  display: flex;
+  flex-direction: column; /* Botones apilados verticalmente */
+}
+
+.stepper-button {
+  background-color: #4a5568; /* Gris oscuro para los botones */
+  color: #fff;
+  border: none; /* Elimina el borde individual de los botones */
+  width: 30px; /* Ancho de los botones */
+  height: 25px; /* Altura de cada botón (la mitad del input casi) */
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepper-button:hover {
+  background-color: #64748b; /* Gris más claro al pasar el ratón */
+}
+
+.stepper-button.plus-button {
+  border-bottom: 1px solid #4a5568; /* Borde entre los botones + y - */
+}
+
 
 /* Nuevo estilo para el botón Guardar */
 .save-item-button {

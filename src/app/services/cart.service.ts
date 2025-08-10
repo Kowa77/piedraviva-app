@@ -4,7 +4,7 @@ import { map, switchMap } from 'rxjs/operators';
 import { getDatabase, ref, onValue, set, push, remove, DataSnapshot, get, update } from 'firebase/database';
 import { FirebaseApp } from '@angular/fire/app';
 import { CartItem } from '../models/cart-item.model';
-import { Pizza } from '../models/pizza.model';
+import { Pizza } from '../models/pizza.model'; // Asegúrate de que esta importación sea correcta si 'Pizza' se usa directamente
 import { Purchase } from '../models/purchase.model'; // Asegúrate de tener este modelo
 
 @Injectable({
@@ -148,6 +148,7 @@ export class CartService {
 
   /**
    * Registra una compra en la base de datos.
+   * El timestamp se guarda en formato YYYY-MM-DDTHH:mm:ss-03:00 (hora de Uruguay sin milisegundos).
    * @param userId El UID del usuario que realiza la compra.
    * @param cartItems Los ítems del carrito en el momento de la compra.
    * @param total El total de la compra.
@@ -158,17 +159,33 @@ export class CartService {
       throw new Error('No hay usuario logueado para registrar la compra.');
     }
     const purchasesRef = ref(this.db, `purchases/${userId}`);
-    const purchaseId = push(purchasesRef).key;
+    const newPurchaseRef = push(purchasesRef); // Genera una nueva referencia con una clave única
+    const purchaseId = newPurchaseRef.key; // Obtiene la clave generada
+
+    // Obtiene la fecha y hora actual en la zona horaria local del entorno de ejecución.
+    const now = new Date();
+
+    // Extrae los componentes de la fecha y hora local.
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0'); // getMonth() es 0-indexado
+    const day = now.getDate().toString().padStart(2, '0');
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+
+    // Construye la cadena de timestamp con el formato YYYY-MM-DDTHH:mm:ss-03:00
+    // Esto asume un desfase fijo de -03:00 para Uruguay.
+    const formattedTimestamp = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-03:00`;
 
     const purchaseData = {
-      purchaseId: purchaseId,
+      purchaseId: purchaseId, // Asigna el purchaseId generado
       userId: userId,
       items: cartItems,
       total: total,
-      timestamp: new Date().toISOString()
+      timestamp: formattedTimestamp // Usar el timestamp formateado con la hora local y el offset
     };
 
-    await set(ref(this.db, `purchases/${userId}/${purchaseId}`), purchaseData);
+    await set(newPurchaseRef, purchaseData); // Guarda los datos de la compra en la nueva referencia
     return purchaseData;
   }
 

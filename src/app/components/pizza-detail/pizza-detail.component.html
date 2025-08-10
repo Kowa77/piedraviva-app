@@ -1,0 +1,69 @@
+<div class="detail-main-container">
+  <div class="detail-content-wrapper">
+
+    <!-- Botón de Volver al Menú -->
+    <div class="back-button-container">
+      <a routerLink="/" class="back-button">← Volver al Menú</a>
+    </div>
+
+    <!-- Contenedor del Logo de la Empresa -->
+    <div class="company-logo-container">
+      <img src="https://placehold.co/150x50/FFDDC1/000000?text=Tu+Logo" alt="" class="company-logo">
+    </div>
+
+    <!-- PRIMARY @IF BLOCK: Unwrap the product$ observable here first. -->
+    @if (product$ | async; as product) {
+      <!-- Ahora 'product' está disponible en este scope. Puede ser Product o undefined. -->
+      <!-- Comprobamos los estados de carga y error, y luego si el producto se encontró. -->
+
+      @if (isLoading) {
+        <div class="loading-message-detail">
+          <p>Cargando detalles del producto...</p>
+        </div>
+      } @else if (errorMessage) {
+        <div class="error-message-detail">
+          <p>{{ errorMessage }}</p>
+        </div>
+      } @else if (product) { <!-- Si 'product' está definido (significa que se encontró) -->
+        <div class="pizza-detail-card"> <!-- Mantengo el nombre de clase "pizza-detail-card" por simplicidad -->
+          <div class="pizza-detail-image-container">
+            <img [src]="product.imagenUrl || 'https://placehold.co/800x600/FF5733/FFFFFF?text=' + this.encodeURIComponent(product.nombre || 'Producto')"
+                 [alt]="product.nombre"
+                 class="pizza-detail-image">
+          </div>
+          <div class="pizza-detail-info">
+            <h1 class="pizza-detail-name">{{ product.nombre }}</h1>
+            <p class="pizza-detail-description">{{ product.descripcion }}</p>
+
+            <!-- Mostrar sabores solo si es una pizza -->
+            @if (isPizza(product) && product.sabores) {
+              <div class="pizza-detail-flavors">
+                @for (sabor of product.sabores; track $index) {
+                  <span class="pizza-flavor-tag-detail">
+                    {{ sabor }}
+                  </span>
+                }
+              </div>
+            }
+
+            <div class="pizza-detail-price-section">
+              <span class="pizza-detail-price">{{ product.precio | currency:'UYU':'$':'1.2-2' }}</span>
+              <button (click)="payProduct(product)" class="pay-button">Pagar Ahora</button>
+            </div>
+          </div>
+        </div>
+      } @else { <!-- Si 'product' es undefined (no se encontró) después de la carga y sin error específico -->
+        <div class="not-found-message">
+          <p>Producto no encontrado o ID no válido.</p>
+        </div>
+      }
+    } @else {
+      <!-- Este bloque 'else' externo se ejecuta si 'product$' aún no ha emitido ningún valor,
+           o si el observable mismo es null/undefined. Es un buen lugar para un mensaje de carga inicial. -->
+      <div class="loading-message-detail">
+          <p>Cargando detalles del producto...</p>
+      </div>
+    }
+
+  </div>
+</div>
