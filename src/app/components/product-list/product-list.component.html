@@ -1,0 +1,86 @@
+<div class="main-container">
+  <div class="content-wrapper">
+
+    <!-- Encabezado del Menu -->
+    <header class="menu-header">
+      Menu Piedraviva
+    </header>
+
+    <!-- Contenedor principal de los productos con perspectiva para el efecto 3D -->
+    @if (products$ | async; as products) {
+      <div class="pizza-grid-container relative">
+        @if (loading) {
+          <!-- Plantilla que se muestra mientras se cargan los datos. -->
+          <div class="loading-message">
+            <p>Cargando el menú de productos...</p>
+          </div>
+        } @else if (errorMessage) {
+          <div class="loading-message"> <!-- Reutilizamos la clase para estilos de mensaje -->
+            <p>{{ errorMessage }}</p>
+          </div>
+        } @else if (products.length > 0) {
+          <div class="pizza-grid">
+            @for (product of products; track product.id) {
+              <div class="pizza-card-3d">
+
+                <!-- El enlace ahora envuelve solo la parte de la tarjeta que no es el boton de agregar al carrito -->
+                <a [routerLink]="['/product', product.id]" class="pizza-card-link-content">
+                  <!-- Imagen del producto -->
+                  <div class="pizza-image"
+                       [style.background-image]="'url(' + (product.imagenUrl || 'https://placehold.co/600x400/FF5733/FFFFFF?text=' + this.encodeURIComponent(product.nombre || 'Producto')) + ')'">
+                  </div>
+                  <div class="pizza-details">
+                    <h2 class="pizza-name">{{ product.nombre }}</h2>
+                    <p class="pizza-description">
+                      {{ product.descripcion }}
+                    </p>
+                    <div class="pizza-footer">
+                      <!-- Usando el currency pipe con UYU y el símbolo $ -->
+                      <span class="pizza-price">
+                        {{ product.precio | currency:'UYU':'$':'1.2-2' }}
+                      </span>
+                      @if (isPizza(product) && product.sabores.length) {
+                        <div class="pizza-flavors">
+                          @for (sabor of product.sabores; track $index) {
+                            <span class="pizza-flavor-tag">
+                              {{ sabor }}
+                            </span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </a>
+                <!-- Seccion de Cantidad y Boton "Agregar al Carrito" -->
+                <div class="add-to-cart-section">
+                  <div class="quantity-controls">
+                    <button (click)="decrementQuantity(product)" class="quantity-button minus-button">-</button>
+                    <input
+                      type="number"
+                      min="0"
+                      [value]="product.selectedQuantity || 0"
+                      (input)="onQuantityInputChange(product, $event)"
+                      class="quantity-input">
+                    <button (click)="incrementQuantity(product)" class="quantity-button plus-button">+</button>
+                  </div>
+                  <button class="add-to-cart-button" (click)="addToCart(product, product.selectedQuantity || 0)">Agregar al Carrito</button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Plantilla que se muestra si no hay productos. -->
+          <div class="no-pizzas-message"> <!-- Reutilizamos la clase para el mensaje -->
+            <p>Lo sentimos, no hay productos disponibles en este momento.</p>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Plantilla que se muestra si el observable aún no ha emitido valores -->
+      <div class="loading-message">
+        <p>Cargando el menú de productos...</p>
+      </div>
+    }
+
+  </div>
+</div>

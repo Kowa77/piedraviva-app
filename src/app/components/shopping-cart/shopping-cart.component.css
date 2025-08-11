@@ -107,14 +107,19 @@
   color: #a0aec0; /* text-gray-300 */
 }
 
+/* --- NUEVOS/AJUSTADOS ESTILOS PARA LOS CONTROLES DE CANTIDAD --- */
 .item-controls {
-  display: flex;
+  display: flex; /* Hace que los botones y el input se alineen horizontalmente */
   align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0; /* Evita que los controles se encojan */
+  /* Eliminamos el 'gap' aquí para que los elementos se peguen */
+  flex-shrink: 0;
   margin-top: 0.5rem; /* Espacio para móviles */
   width: 100%; /* Ocupa todo el ancho en móviles */
   justify-content: center; /* Centra los controles en móviles */
+  /* Añadido para el borde del conjunto */
+  border: 1px solid #4a5568;
+  border-radius: 0.375rem;
+  overflow: hidden; /* Para que el contenido no se salga de los bordes redondeados */
 }
 
 @media (min-width: 640px) { /* sm: */
@@ -125,65 +130,71 @@
   }
 }
 
-/* Nuevo Stepper de Cantidad Integrado */
-.quantity-stepper {
-  display: flex;
-  border: 1px solid #4a5568; /* Borde alrededor de todo el stepper */
-  border-radius: 0.375rem; /* rounded-md */
-  overflow: hidden; /* Asegura que los bordes internos no se vean */
-  background-color: #2d3748; /* Fondo del stepper */
-}
-
-.item-quantity-input {
-  width: 60px; /* Ancho ajustado */
-  padding: 0.5rem 0; /* Padding vertical, padding horizontal 0 */
-  border: none; /* Elimina el borde individual del input */
-  background-color: #1a202c; /* Fondo del input */
-  color: #e2e8f0;
-  font-size: 1rem;
-  text-align: center;
-  -moz-appearance: textfield; /* Para Firefox */
-}
-
-.item-quantity-input::-webkit-outer-spin-button,
-.item-quantity-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.stepper-buttons {
-  display: flex;
-  flex-direction: column; /* Botones apilados verticalmente */
-}
-
-.stepper-button {
-  background-color: #4a5568; /* Gris oscuro para los botones */
+.quantity-button {
+  background-color: #4a5568; /* Gris oscuro */
   color: #fff;
-  border: none; /* Elimina el borde individual de los botones */
-  width: 30px; /* Ancho de los botones */
-  height: 25px; /* Altura de cada botón (la mitad del input casi) */
-  font-size: 1rem;
+  border: none; /* Quitamos el border individual del botón */
+  width: 35px;
+  height: 35px;
+  font-size: 1.2rem;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0; /* Evita que el botón se encoja */
 }
 
-.stepper-button:hover {
+.quantity-button:hover {
   background-color: #64748b; /* Gris más claro al pasar el ratón */
 }
 
-.stepper-button.plus-button {
-  border-bottom: 1px solid #4a5568; /* Borde entre los botones + y - */
+/* Border-radius específico para el botón de decremento (extremo izquierdo) */
+.quantity-button.minus-button {
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  /* border-right: none;  Ya no es necesario si el contenedor tiene el borde */
 }
 
+/* Border-radius específico para el botón de incremento (extremo derecho) */
+.quantity-button.plus-button {
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  /* border-left: none; Ya no es necesario si el contenedor tiene el borde */
+}
 
-/* Nuevo estilo para el botón Guardar */
-.save-item-button {
-  background-color: #48bb78; /* Un verde para guardar */
-  color: #1a202c; /* Texto oscuro */
+.item-quantity-input {
+  width: 60px; /* Ancho ajustado para el input de cantidad */
+  padding: 0.5rem;
+  border: none; /* Quitamos el borde individual del input */
+  border-radius: 0; /* Sin bordes redondeados en el medio */
+  background-color: #1a202c; /* Fondo del input */
+  color: #e2e8f0;
+  font-size: 1rem;
+  text-align: center;
+  appearance: textfield; /* Propiedad estándar para compatibilidad */
+  -moz-appearance: textfield; /* Para Firefox */
+  box-sizing: border-box; /* Añadido para incluir padding y border en el ancho */
+}
+
+/* Ocultar flechas en Chrome, Safari, Edge, Opera */
+.item-quantity-input::-webkit-outer-spin-button,
+.item-quantity-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* --- FIN DE ESTILOS DE CONTROLES DE CANTIDAD --- */
+
+/* Nuevo estilo para el botón Guardar (Originalmente estaba en el carrito, pero se eliminó del HTML que proporcionaste) */
+/* .save-item-button {
+  background-color: #48bb78;
+  color: #1a202c;
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 0.375rem;
@@ -194,8 +205,8 @@
 }
 
 .save-item-button:hover {
-  background-color: #38a169; /* Verde más oscuro al hover */
-}
+  background-color: #38a169;
+} */
 
 .remove-item-button {
   background-color: #e53e3e; /* bg-red-600 */
@@ -207,6 +218,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  margin-left: 0.75rem; /* Espacio para separarlo de los controles de cantidad */
 }
 
 .remove-item-button:hover {

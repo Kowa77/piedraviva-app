@@ -1,20 +1,22 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { getDatabase, ref, onValue, set, push, remove, DataSnapshot, get, update } from 'firebase/database';
-import { FirebaseApp } from '@angular/fire/app';
+import { map, switchMap, first } from 'rxjs/operators';
+// Importamos las funciones modulares de Firebase Realtime Database
+import { getDatabase, ref, onValue, push, get, child, Database, set, update, remove } from 'firebase/database';
+import { FirebaseApp } from '@angular/fire/app'; // Importamos FirebaseApp
 import { CartItem } from '../models/cart-item.model';
-import { Pizza } from '../models/pizza.model'; // Asegúrate de que esta importación sea correcta si 'Pizza' se usa directamente
-import { Purchase } from '../models/purchase.model'; // Asegúrate de tener este modelo
+import { Purchase } from '../models/purchase.model';
+import { Product } from '../models/product.model'; // Importa el modelo Product
 
 @Injectable({
   providedIn: 'root'
 })
 export class CartService {
-  private db;
+  private db: Database; // Cambiado de dbRef a db y de tipo AngularFireDatabase a Database
+  userId: string | null = null;
 
-  constructor(private app: FirebaseApp) {
-    this.db = getDatabase(this.app);
+  constructor(private app: FirebaseApp) { // Inyectamos FirebaseApp
+    this.db = getDatabase(this.app); // Obtenemos la instancia de la base de datos modular
   }
 
   /**
@@ -24,113 +26,99 @@ export class CartService {
    */
   getCart(userId: string): Observable<CartItem[]> {
     if (!userId) {
-      return of([]); // Si no hay userId, el carrito está vacío
+      return of([]);
     }
-    const cartRef = ref(this.db, `carts/${userId}/items`);
+    const cartItemsRef = ref(this.db, `carts/${userId}/items`);
 
     return new Observable<CartItem[]>(observer => {
-      onValue(cartRef, (snapshot: DataSnapshot) => {
+      onValue(cartItemsRef, (snapshot) => {
         const items: CartItem[] = [];
         snapshot.forEach(childSnapshot => {
           const itemData = childSnapshot.val();
-          // Asegurarse de que todos los campos necesarios (nombre, precio, imagenUrl) estén presentes
-          // y que el pizzaId sea la clave del childSnapshot.
-          if (itemData && childSnapshot.key) {
-            items.push({
-              pizzaId: childSnapshot.key,
-              nombre: itemData.nombre || 'Nombre Desconocido', // Fallback
-              precio: itemData.precio || 0, // Fallback
-              cantidad: itemData.cantidad || 0, // Fallback
-              imagenUrl: itemData.imagenUrl || '' // Fallback
-            } as CartItem);
-          }
+          items.push({
+            id: childSnapshot.key || '',
+            ...itemData
+          } as CartItem);
         });
         observer.next(items);
       }, (error) => {
-        console.error('Error al obtener el carrito:', error);
         observer.error(error);
       });
     });
   }
 
   /**
-   * Agrega o actualiza un ítem en el carrito del usuario.
+   * Agrega o actualiza un ítem (producto) en el carrito del usuario.
+   * El parámetro 'product' ahora es de tipo Product, no Pizza.
    * @param userId El UID del usuario.
-   * @param pizza La pizza a agregar.
+   * @param product El producto (pizza o bebida) a agregar.
    * @param quantity La cantidad a agregar.
    * @returns Una Promesa que se resuelve con la cantidad total del ítem en el carrito después de la operación.
    */
-  async addItemToCart(userId: string, pizza: Pizza, quantity: number): Promise<number> {
+  async addItemToCart(userId: string, product: Product, quantity: number): Promise<number> {
     if (!userId) {
       throw new Error('No hay usuario logueado para agregar al carrito.');
     }
 
-    const cartItemRef = ref(this.db, `carts/${userId}/items/${pizza.id}`);
-    const snapshot = await get(cartItemRef);
+    const itemRef = ref(this.db, `carts/${userId}/items/${product.id}`);
+    const snapshot = await get(itemRef); // Usamos 'get' para una lectura única
 
     let finalQuantity: number;
     let itemToSave: CartItem;
 
     if (snapshot.exists()) {
-      const currentItem = snapshot.val() as CartItem;
-      finalQuantity = currentItem.cantidad + quantity;
-      // Solo actualizamos la cantidad si el ítem ya existe
-      itemToSave = { ...currentItem, cantidad: finalQuantity };
+      const currentItem = snapshot.val();
+      finalQuantity = currentItem!.cantidad + quantity;
+      // Actualiza solo la cantidad; las otras propiedades ya están en el carrito
+      itemToSave = { ...currentItem!, cantidad: finalQuantity } as CartItem;
     } else {
       finalQuantity = quantity;
       itemToSave = {
-        pizzaId: pizza.id,
-        nombre: pizza.nombre,
-        precio: pizza.precio,
+        id: product.id,
+        nombre: product.nombre,
+        precio: product.precio,
         cantidad: finalQuantity,
-        imagenUrl: pizza.imagenUrl
-      };
+        imagenUrl: product.imagenUrl,
+        descripcion: product.descripcion,
+        tipo: product.tipo
+      } as CartItem;
     }
-    await set(cartItemRef, itemToSave); // Usamos set para sobrescribir o crear el ítem completo
+    await set(itemRef, itemToSave); // Usamos 'set' para establecer o sobrescribir el ítem
     return finalQuantity;
   }
 
   /**
    * Actualiza la cantidad de un ítem específico en el carrito.
    * @param userId El UID del usuario.
-   * @param pizzaId El ID de la pizza en el carrito.
+   * @param itemId El ID del ítem en el carrito (que es el ID del producto).
    * @param newQuantity La nueva cantidad.
    * @returns Una Promesa que se resuelve cuando la operación se completa.
    */
-  async updateItemQuantity(userId: string, pizzaId: string, newQuantity: number): Promise<void> {
+  async updateItemQuantity(userId: string, itemId: string, newQuantity: number): Promise<void> {
     if (!userId) {
       throw new Error('No hay usuario logueado para actualizar el carrito.');
     }
     if (newQuantity <= 0) {
-      await this.removeItemFromCart(userId, pizzaId);
+      await this.removeItemFromCart(userId, itemId); // Si la cantidad es 0 o menos, elimina el ítem
       return;
     }
 
-    const cartItemRef = ref(this.db, `carts/${userId}/items/${pizzaId}`);
-    const snapshot = await get(cartItemRef); // Obtenemos los datos actuales del ítem
-
-    if (snapshot.exists()) {
-      const currentItem = snapshot.val() as CartItem;
-      // Creamos un nuevo objeto con la cantidad actualizada y todos los demás campos originales
-      const updatedItem: CartItem = { ...currentItem, cantidad: newQuantity };
-      await set(cartItemRef, updatedItem); // Usamos 'set' para escribir el ítem completo de vuelta
-    } else {
-      throw new Error(`El ítem con ID ${pizzaId} no se encontró en el carrito para actualizar.`);
-    }
+    const itemRef = ref(this.db, `carts/${userId}/items/${itemId}`);
+    await update(itemRef, { cantidad: newQuantity }); // Usamos 'update'
   }
 
   /**
    * Elimina un ítem del carrito del usuario.
    * @param userId El UID del usuario.
-   * @param pizzaId El ID de la pizza a eliminar del carrito.
+   * @param itemId El ID del ítem a eliminar del carrito.
    * @returns Una Promesa que se resuelve cuando la operación se completa.
    */
-  async removeItemFromCart(userId: string, pizzaId: string): Promise<void> {
+  async removeItemFromCart(userId: string, itemId: string): Promise<void> {
     if (!userId) {
       throw new Error('No hay usuario logueado para modificar el carrito.');
     }
-    const cartItemRef = ref(this.db, `carts/${userId}/items/${pizzaId}`);
-    await remove(cartItemRef);
+    const itemRef = ref(this.db, `carts/${userId}/items/${itemId}`);
+    await remove(itemRef); // Usamos 'remove'
   }
 
   /**
@@ -143,12 +131,11 @@ export class CartService {
       throw new Error('No hay usuario logueado para vaciar el carrito.');
     }
     const cartRef = ref(this.db, `carts/${userId}/items`);
-    await remove(cartRef);
+    await remove(cartRef); // Usamos 'remove'
   }
 
   /**
    * Registra una compra en la base de datos.
-   * El timestamp se guarda en formato YYYY-MM-DDTHH:mm:ss-03:00 (hora de Uruguay sin milisegundos).
    * @param userId El UID del usuario que realiza la compra.
    * @param cartItems Los ítems del carrito en el momento de la compra.
    * @param total El total de la compra.
@@ -158,34 +145,18 @@ export class CartService {
     if (!userId) {
       throw new Error('No hay usuario logueado para registrar la compra.');
     }
-    const purchasesRef = ref(this.db, `purchases/${userId}`);
-    const newPurchaseRef = push(purchasesRef); // Genera una nueva referencia con una clave única
-    const purchaseId = newPurchaseRef.key; // Obtiene la clave generada
+    const purchasesListRef = ref(this.db, `purchases/${userId}`);
+    const newPurchaseRef = push(purchasesListRef); // Usamos 'push' para obtener una nueva clave
 
-    // Obtiene la fecha y hora actual en la zona horaria local del entorno de ejecución.
-    const now = new Date();
-
-    // Extrae los componentes de la fecha y hora local.
-    const year = now.getFullYear();
-    const month = (now.getMonth() + 1).toString().padStart(2, '0'); // getMonth() es 0-indexado
-    const day = now.getDate().toString().padStart(2, '0');
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-
-    // Construye la cadena de timestamp con el formato YYYY-MM-DDTHH:mm:ss-03:00
-    // Esto asume un desfase fijo de -03:00 para Uruguay.
-    const formattedTimestamp = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-03:00`;
-
-    const purchaseData = {
-      purchaseId: purchaseId, // Asigna el purchaseId generado
+    const purchaseData: Purchase = {
+      purchaseId: newPurchaseRef.key || '',
       userId: userId,
       items: cartItems,
       total: total,
-      timestamp: formattedTimestamp // Usar el timestamp formateado con la hora local y el offset
+      timestamp: new Date().toISOString()
     };
 
-    await set(newPurchaseRef, purchaseData); // Guarda los datos de la compra en la nueva referencia
+    await set(newPurchaseRef, purchaseData); // Usamos 'set'
     return purchaseData;
   }
 
@@ -201,19 +172,17 @@ export class CartService {
     const purchasesRef = ref(this.db, `purchases/${userId}`);
 
     return new Observable<Purchase[]>(observer => {
-      onValue(purchasesRef, (snapshot: DataSnapshot) => {
-        console.log('Snapshot de historial de compras (raw):', snapshot.val()); // LOG ADICIONAL
+      onValue(purchasesRef, (snapshot) => {
         const purchases: Purchase[] = [];
         snapshot.forEach(childSnapshot => {
           const purchaseData = childSnapshot.val();
-          if (purchaseData) {
-            purchases.push(purchaseData as Purchase);
-          }
+          purchases.push({
+            purchaseId: childSnapshot.key || '',
+            ...purchaseData
+          } as Purchase);
         });
-        console.log('Historial de compras (parseado):', purchases); // LOG ADICIONAL
         observer.next(purchases);
       }, (error) => {
-        console.error('Error al obtener el historial de compras:', error);
         observer.error(error);
       });
     });

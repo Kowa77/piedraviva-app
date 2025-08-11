@@ -6,6 +6,11 @@
       <a routerLink="/cart" class="back-button">← Volver al Carrito</a>
     </div>
 
+    <!-- Contenedor del Logo de la Empresa -->
+    <div class="company-logo-container">
+      <img src="https://placehold.co/150x50/FFDDC1/000000?text=Tu+Logo" alt="Logo de la Empresa" class="company-logo">
+    </div>
+
     <h1 class="history-title">Historial de Compras</h1>
 
     @if (loading) {
@@ -24,15 +29,15 @@
                   <span class="purchase-date">{{ purchase.timestamp | date:'short' }}</span>
                 </div>
                 <div class="purchase-items-list">
-                  @for (item of purchase.items; track item.pizzaId) {
+                  @for (item of purchase.items; track item.id) { <!-- CORREGIDO: Cambiado item.productId a item.id -->
                     <div class="purchase-item">
-                      <img [src]="item.imagenUrl || 'https://placehold.co/50x50/FF5733/FFFFFF?text=Pizza'"
+                      <img [src]="item.imagenUrl || 'https://placehold.co/50x50/FF5733/FFFFFF?text=Producto'"
                            [alt]="item.nombre"
                            class="purchase-item-image">
                       <div class="purchase-item-details">
                         <span class="purchase-item-name">{{ item.nombre }}</span>
                         <span class="purchase-item-quantity">x{{ item.cantidad }}</span>
-                        <span class="purchase-item-price">{{ item.precio | currency:'UYU':'$':'1.2-2' }}</span>
+                        <span class="purchase-item-price">{{ (item.precio * item.cantidad) | currency:'UYU':'$':'1.2-2' }}</span>
                       </div>
                     </div>
                   }

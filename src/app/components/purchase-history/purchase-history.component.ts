@@ -39,11 +39,11 @@ export class PurchaseHistoryComponent implements OnInit, OnDestroy {
           return of([]); // No hay usuario, no hay historial
         }
       }),
-      map((purchases: Purchase[]) => { // Añadido tipo explícito a 'purchases'
+      map(purchases => {
         this.loading = false; // Oculta el estado de carga una vez que se reciben los datos
         console.log('Historial de compras cargado:', purchases);
         // Ordenar las compras por fecha descendente (las mas recientes primero)
-        return purchases.sort((a: Purchase, b: Purchase) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        return purchases.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       })
     ).subscribe(
       // Asignamos el resultado al observable purchases$

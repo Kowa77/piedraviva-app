@@ -3,7 +3,7 @@ import { CommonModule, CurrencyPipe } from '@angular/common'; // Añadir Currenc
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, switchMap, of, forkJoin } from 'rxjs'; // Importar forkJoin
 import { map } from 'rxjs/operators'; // AÑADIDO: Importa el operador map
-import { PizzaService } from '../../services/pizza.service'; // Este servicio ahora maneja Productos
+import { PizzaService } from '../../services/product.service'; // Este servicio ahora maneja Productos
 import { Product } from '../../models/product.model'; // Importar Product
 
 @Component({

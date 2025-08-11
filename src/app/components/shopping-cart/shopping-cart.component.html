@@ -11,9 +11,9 @@
     @if (cartItems$ | async; as items) {
       @if (items.length > 0) {
         <div class="cart-items-grid">
-          @for (item of items; track item.pizzaId) {
+          @for (item of items; track item.id) { <!-- CAMBIADO: de item.pizzaId a item.id -->
             <div class="cart-item-card">
-              <img [src]="item.imagenUrl || 'https://placehold.co/100x100/FF5733/FFFFFF?text=Pizza'"
+              <img [src]="item.imagenUrl || 'https://placehold.co/100x100/FF5733/FFFFFF?text=Producto'"
                    [alt]="item.nombre"
                    class="cart-item-image">
               <div class="item-details">
@@ -21,19 +21,13 @@
                 <p class="item-price">{{ item.precio | currency:'UYU':'$':'1.2-2' }}</p>
               </div>
               <div class="item-controls">
-                <!-- Controles de cantidad con botones integrados -->
-                <div class="quantity-stepper">
-                  <input
-                    type="number" min="0" [value]="item.cantidad === 0 ? '' : item.cantidad"
-                    (input)="onQuantityChange(item, $event)" (blur)="onQuantityBlur(item, $event)"
-                    class="item-quantity-input" />
-                  <div class="stepper-buttons">
-                    <button (click)="incrementQuantity(item)" class="stepper-button plus-button">+</button>
-                    <button (click)="decrementQuantity(item)" class="stepper-button minus-button">-</button>
-                  </div>
-                </div>
-
-                <!-- Botón de Guardar ELIMINADO -->
+                <!-- Controles de cantidad unificados (similar a product-list) -->
+                <button (click)="decrementQuantity(item)" class="quantity-button minus-button">-</button>
+                <input
+                  type="number" min="0" [value]="item.cantidad === 0 ? '' : item.cantidad"
+                  (input)="onQuantityChange(item, $event)" (blur)="onQuantityBlur(item, $event)"
+                  class="item-quantity-input" />
+                <button (click)="incrementQuantity(item)" class="quantity-button plus-button">+</button>
 
                 <button (click)="removeItem(item)" class="remove-item-button">Eliminar</button>
               </div>
@@ -52,7 +46,7 @@
 
       } @else {
         <div class="empty-cart-message">
-          <p>Tu carrito está vacío. ¡Agrega algunas pizzas deliciosas!</p>
+          <p>Tu carrito está vacío. ¡Agrega algunos productos deliciosos!</p>
           <a routerLink="/" class="back-to-menu-button">Ver Menú</a>
         </div>
       }

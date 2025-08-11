@@ -5,7 +5,7 @@ import { Observable, Subscription, of, BehaviorSubject } from 'rxjs';
 import { switchMap, map, first, take } from 'rxjs/operators';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
-import { CartItem } from '../../models/cart-item.model';
+import { CartItem } from '../../models/cart-item.model'; // Asegúrate de que esta interfaz tenga 'pizzaId'
 import { Purchase } from '../../models/purchase.model';
 
 @Component({
@@ -127,13 +127,14 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
         // restore the input visually to the item's current quantity (what's already in the BehaviorSubject)
         // and do not update the edited quantities map.
         console.warn(`ShoppingCartComponent: Invalid entry for "${item.nombre}". Restored to ${item.cantidad}.`);
+        inputElement.value = String(item.cantidad); // Restore visual input
         return; // Exit, do not update editedQuantities or BehaviorSubject for an invalid entry
       }
       newQuantityForMap = parsedQuantity;
     }
 
     // Store the edited quantity in the local map for later saving.
-    this.editedQuantities.set(item.pizzaId, newQuantityForMap);
+    this.editedQuantities.set(item.id, newQuantityForMap); // Cambiado de item.pizzaId a item.id
 
     console.log(`ShoppingCartComponent: Quantity of "${item.nombre}" edited to ${newQuantityForMap} (locally).`);
 
@@ -141,7 +142,7 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     // This is KEY for the [value]="item.cantidad === 0 ? '' : item.cantidad" binding
     // in the HTML to react and visually update the input (to empty if newQuantityForMap is 0).
     const currentItems = this.cartItems$.getValue();
-    const itemToUpdateIndex = currentItems.findIndex(i => i.pizzaId === item.pizzaId);
+    const itemToUpdateIndex = currentItems.findIndex(i => i.id === item.id); // Cambiado de item.pizzaId a item.id
     if (itemToUpdateIndex > -1) {
       const updatedItems = [...currentItems];
       updatedItems[itemToUpdateIndex] = { ...updatedItems[itemToUpdateIndex], cantidad: newQuantityForMap };
@@ -155,11 +156,34 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
    * @param event The blur event.
    */
   onQuantityBlur(item: CartItem, event: Event): void {
+    // If the input is empty or invalid after blur, set quantity to 0 and remove if 0, otherwise set to 1.
+    const inputElement = event.target as HTMLInputElement;
+    const value = inputElement.value.trim();
+    let finalQuantity = parseInt(value, 10);
+
+    if (isNaN(finalQuantity) || finalQuantity < 0) {
+      finalQuantity = 1; // Default to 1 if invalid or empty on blur
+      this.editedQuantities.set(item.id, finalQuantity); // Cambiado de item.pizzaId a item.id
+      inputElement.value = String(finalQuantity); // Update input visually
+      console.log(`ShoppingCartComponent: Invalid input for "${item.nombre}" on blur. Restored to 1.`);
+    } else if (finalQuantity === 0) {
+      // If the final quantity is 0, attempt to remove the item
+      this.removeItem(item); // This will handle confirmation internally.
+      this.editedQuantities.delete(item.id); // Cambiado de item.pizzaId a item.id
+      return; // Exit, as removeItem will handle further state updates
+    }
+
+    // Only save if the quantity has actually changed from the original item.cantidad
+    // AND if it's different from the value in the map (which might be the same if it was just a valid number entered)
     if (this.hasEditedQuantity(item)) {
       console.log(`ShoppingCartComponent: onQuantityBlur triggered for "${item.nombre}". Saving quantity.`);
       this.saveQuantity(item);
+    } else if (finalQuantity === item.cantidad && this.editedQuantities.has(item.id)) { // Cambiado de item.pizzaId a item.id
+        // If the quantity on blur is the same as original and it was somehow in editedQuantities, clean up.
+        this.editedQuantities.delete(item.id); // Cambiado de item.pizzaId a item.id
     }
   }
+
 
   /**
    * Increments the quantity of an item in the cart.
@@ -168,20 +192,21 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
    */
   incrementQuantity(item: CartItem): void {
     // Get the current quantity from the BehaviorSubject or the edited map
-    let currentQuantity = this.editedQuantities.get(item.pizzaId);
-    if (currentQuantity === undefined) { // If not in edited map, use current item quantity
+    let currentQuantity = this.editedQuantities.get(item.id); // Cambiado de item.pizzaId a item.id
+    if (currentQuantity === undefined) { // If not in edited map, use current item quantity from BehaviorSubject
         currentQuantity = item.cantidad;
     }
 
     const newQuantity = currentQuantity + 1;
-    this.editedQuantities.set(item.pizzaId, newQuantity);
+    this.editedQuantities.set(item.id, newQuantity); // Cambiado de item.pizzaId a item.id
 
     const currentItems = this.cartItems$.getValue();
-    const itemToUpdateIndex = currentItems.findIndex(i => i.pizzaId === item.pizzaId);
+    const itemToUpdateIndex = currentItems.findIndex(i => i.id === item.id); // Cambiado de item.pizzaId a item.id
     if (itemToUpdateIndex > -1) {
       const updatedItems = [...currentItems];
       updatedItems[itemToUpdateIndex] = { ...updatedItems[itemToUpdateIndex], cantidad: newQuantity };
       this.cartItems$.next(updatedItems);
+      this.saveQuantity(updatedItems[itemToUpdateIndex]); // Guarda automáticamente al incrementar/decrementar
     }
     console.log(`ShoppingCartComponent: Quantity of "${item.nombre}" incremented to ${newQuantity} (locally).`);
   }
@@ -193,21 +218,27 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
    */
   decrementQuantity(item: CartItem): void {
     // Get the current quantity from the BehaviorSubject or the edited map
-    let currentQuantity = this.editedQuantities.get(item.pizzaId);
-    if (currentQuantity === undefined) { // If not in edited map, use current item quantity
+    let currentQuantity = this.editedQuantities.get(item.id); // Cambiado de item.pizzaId a item.id
+    if (currentQuantity === undefined) { // If not in edited map, use current item quantity from BehaviorSubject
         currentQuantity = item.cantidad;
     }
 
     if (currentQuantity > 0) { // Ensure quantity does not go below 0
       const newQuantity = currentQuantity - 1;
-      this.editedQuantities.set(item.pizzaId, newQuantity);
+      this.editedQuantities.set(item.id, newQuantity); // Cambiado de item.pizzaId a item.id
 
       const currentItems = this.cartItems$.getValue();
-      const itemToUpdateIndex = currentItems.findIndex(i => i.pizzaId === item.pizzaId);
+      const itemToUpdateIndex = currentItems.findIndex(i => i.id === item.id); // Cambiado de item.pizzaId a item.id
       if (itemToUpdateIndex > -1) {
         const updatedItems = [...currentItems];
         updatedItems[itemToUpdateIndex] = { ...updatedItems[itemToUpdateIndex], cantidad: newQuantity };
         this.cartItems$.next(updatedItems);
+        // Save automatically, or remove if quantity becomes 0
+        if (newQuantity === 0) {
+            this.removeItem(updatedItems[itemToUpdateIndex]); // Handles confirmation and removal
+        } else {
+            this.saveQuantity(updatedItems[itemToUpdateIndex]);
+        }
       }
       console.log(`ShoppingCartComponent: Quantity of "${item.nombre}" decremented to ${newQuantity} (locally).`);
     } else {
@@ -221,7 +252,7 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
    * @returns True if the quantity has been edited, false otherwise.
    */
   hasEditedQuantity(item: CartItem): boolean {
-    const editedValue = this.editedQuantities.get(item.pizzaId); // Use pizzaId
+    const editedValue = this.editedQuantities.get(item.id); // Cambiado de item.pizzaId a item.id
     // Consider it edited if the value in the map exists and is different from the original quantity
     return editedValue !== undefined && editedValue !== item.cantidad;
   }
@@ -231,50 +262,61 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
    * @param item The cart item to save.
    */
   async saveQuantity(item: CartItem): Promise<void> {
-    if (!this.userId || !item.pizzaId) { // Use pizzaId
-      alert('Error: Could not identify user or pizza.');
+    if (!this.userId || !item.id) { // Cambiado de item.pizzaId a item.id
+      alert('Error: No se pudo identificar al usuario o al producto.');
       return;
     }
 
-    const newQuantity = this.editedQuantities.get(item.pizzaId); // Use pizzaId
+    const newQuantity = this.editedQuantities.get(item.id); // Cambiado de item.pizzaId a item.id
+
+    // If newQuantity is undefined, it means no actual edit was made, or it was already handled.
+    if (newQuantity === undefined) {
+        console.log(`ShoppingCartComponent: No quantity change for "${item.nombre}" to save.`);
+        return;
+    }
 
     // If the quantity is 0, ask the user if they want to remove the item.
     if (newQuantity === 0) {
-      // Replace the alert/confirm with a custom modal if needed
-      if (confirm(`Are you sure you want to remove "${item.nombre}" from the cart?`)) {
-        await this.removeItem(item);
-      } else {
-        // If the user cancels the deletion, restore the quantity to 1 visually and in the map.
-        this.editedQuantities.set(item.pizzaId, 1);
-        const currentItems = this.cartItems$.getValue();
-        const itemToUpdateIndex = currentItems.findIndex(i => i.pizzaId === item.pizzaId);
-        if (itemToUpdateIndex > -1) {
-          const updatedItems = [...currentItems];
-          updatedItems[itemToUpdateIndex] = { ...updatedItems[itemToUpdateIndex], cantidad: 1 };
-          this.cartItems$.next(updatedItems);
-        }
-      }
-      // Remove the entry from the edited map as the quantity of 0 has been handled.
-      this.editedQuantities.delete(item.pizzaId);
-      return; // Exit after handling quantity 0
+      // NOTA: Se debe usar un modal personalizado en lugar de `confirm()`
+      // if (confirm(`¿Estás seguro de que quieres eliminar "${item.nombre}" del carrito?`)) {
+      //   await this.removeItem(item);
+      // } else {
+      //   // Si el usuario cancela la eliminación, restaurar la cantidad a 1
+      //   this.editedQuantities.set(item.id, 1); // Cambiado de item.pizzaId a item.id
+      //   const currentItems = this.cartItems$.getValue();
+      //   const itemToUpdateIndex = currentItems.findIndex(i => i.id === item.id); // Cambiado de item.pizzaId a item.id
+      //   if (itemToUpdateIndex > -1) {
+      //     const updatedItems = [...currentItems];
+      //     updatedItems[itemToUpdateIndex] = { ...updatedItems[itemToUpdateIndex], cantidad: 1 };
+      //     this.cartItems$.next(updatedItems);
+      //   }
+      // }
+      // Directamente llama a removeItem si la cantidad es 0, que ya tiene su propio manejo.
+      this.removeItem(item);
+      this.editedQuantities.delete(item.id); // Cambiado de item.pizzaId a item.id // Clear from map as it's being handled
+      return;
     }
 
-    if (newQuantity === undefined || isNaN(newQuantity) || newQuantity < 0) {
-      alert('Please enter a valid quantity (greater than zero).');
-      // At this point, if the value is invalid, `onQuantityChange` would have already handled it visually.
-      // We should remove the entry from `editedQuantities` to avoid an invalid "pending change."
-      this.editedQuantities.delete(item.pizzaId);
+    if (isNaN(newQuantity) || newQuantity < 0) {
+      alert('Por favor, ingresa una cantidad válida (mayor o igual a cero).');
+      this.editedQuantities.delete(item.id); // Cambiado de item.pizzaId a item.id // Clear invalid entry from map
+      // Restore the visual input to the actual item.cantidad
+      const currentItems = this.cartItems$.getValue();
+      const itemToRestore = currentItems.find(i => i.id === item.id); // Cambiado de item.pizzaId a item.id
+      if (itemToRestore) {
+        const updatedItems = currentItems.map(i => i.id === item.id ? { ...i, cantidad: itemToRestore.cantidad } : i); // Cambiado de item.pizzaId a item.id
+        this.cartItems$.next(updatedItems);
+      }
       return;
     }
 
     try {
-      await this.cartService.updateItemQuantity(this.userId, item.pizzaId, newQuantity); // Use pizzaId
-      alert(`Quantity of "${item.nombre}" updated to ${newQuantity}.`);
-      console.log(`ShoppingCartComponent: Quantity of "${item.nombre}" updated to ${newQuantity} in Firebase.`);
-      this.editedQuantities.delete(item.pizzaId); // Remove the entry from the edited map
+      await this.cartService.updateItemQuantity(this.userId, item.id, newQuantity); // Cambiado de item.pizzaId a item.id
+      console.log(`ShoppingCartComponent: Cantidad de "${item.nombre}" actualizada a ${newQuantity} en Firebase.`);
+      this.editedQuantities.delete(item.id); // Cambiado de item.pizzaId a item.id // Remove the entry from the edited map
     } catch (error) {
-      console.error('ShoppingCartComponent: Error updating quantity in Firebase:', error);
-      alert('Error updating quantity. Please try again.');
+      console.error('ShoppingCartComponent: Error al actualizar la cantidad en Firebase:', error);
+      alert('Error al actualizar la cantidad. Por favor, inténtalo de nuevo.');
     }
   }
 
@@ -283,15 +325,25 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
    * @param item The cart item to remove.
    */
   async removeItem(item: CartItem): Promise<void> {
-    if (this.userId && item.pizzaId) { // Use pizzaId
-        try {
-          await this.cartService.removeItemFromCart(this.userId, item.pizzaId); // Use pizzaId
-          alert(`"${item.nombre}" removed from cart.`);
-          console.log(`ShoppingCartComponent: "${item.nombre}" removed from cart in Firebase.`);
-        } catch (error) {
-          console.error('ShoppingCartComponent: Error removing item from Firebase:', error);
-          alert('Error removing item from cart. Please try again.');
-        }
+    if (!this.userId || !item.id) { // Cambiado de item.pizzaId a item.id
+      alert('Error: No se pudo identificar al usuario o al producto para eliminar.');
+      return;
+    }
+
+    // NOTA: Se debe usar un modal personalizado en lugar de `confirm()`
+    // if (!confirm(`¿Estás seguro de que quieres eliminar "${item.nombre}" del carrito?`)) {
+    //   return;
+    // }
+
+    try {
+      await this.cartService.removeItemFromCart(this.userId, item.id); // Cambiado de item.pizzaId a item.id
+      alert(`"${item.nombre}" eliminado del carrito.`);
+      console.log(`ShoppingCartComponent: "${item.nombre}" eliminado del carrito en Firebase.`);
+      // Elimina de las cantidades editadas si existía
+      this.editedQuantities.delete(item.id); // Cambiado de item.pizzaId a item.id
+    } catch (error) {
+      console.error('ShoppingCartComponent: Error al eliminar el item del carrito en Firebase:', error);
+      alert('Error al eliminar el item del carrito. Por favor, inténtalo de nuevo.');
     }
   }
 
@@ -300,38 +352,32 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
    */
   async checkout(): Promise<void> {
     if (!this.userId) {
-      alert('You must be logged in to complete the purchase.');
+      alert('Debes iniciar sesión para completar la compra.');
       return;
     }
-
-    // REMOVED: The pending quantities check, as they are saved on blur.
-    // if (this.editedQuantities.size > 0) {
-    //   alert('Please save or discard quantity changes before proceeding with the purchase.');
-    //   return;
-    // }
 
     const currentCartItems = this.cartItems$.getValue();
     const currentTotal = this.calculateTotal(currentCartItems);
 
     if (currentCartItems.length === 0) {
-      alert('Your cart is empty. Add products before purchasing.');
+      alert('Tu carrito está vacío. Agrega productos antes de comprar.');
       return;
     }
 
       try {
         // Record the purchase in the database
         await this.cartService.recordPurchase(this.userId, currentCartItems, currentTotal);
-        console.log('ShoppingCartComponent: Purchase recorded successfully.');
+        console.log('ShoppingCartComponent: Compra registrada exitosamente.');
 
         // Clear the cart after a successful purchase
         await this.cartService.clearCart(this.userId);
-        alert('Purchase successful! Your cart has been emptied.');
+        alert('¡Compra exitosa! Tu carrito ha sido vaciado.');
         this.showPurchaseHistoryButton = true; // Ensure the button is shown after the first purchase
-        console.log('ShoppingCartComponent: Cart emptied after purchase.');
+        console.log('ShoppingCartComponent: Carrito vaciado después de la compra.');
 
       } catch (error) {
-        console.error('ShoppingCartComponent: Error processing purchase:', error);
-        alert('An error occurred while processing your purchase. Please try again.');
+        console.error('ShoppingCartComponent: Error al procesar la compra:', error);
+        alert('Ocurrió un error al procesar tu compra. Por favor, inténtalo de nuevo.');
       }
   }
 
