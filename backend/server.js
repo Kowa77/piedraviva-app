@@ -1,30 +1,21 @@
-// server.js (o index.js)
+// backend/server.js (o index.js)
 import express from 'express';
 import cors from 'cors';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-// Importa las variables de entorno si están en un archivo separado
-// En un entorno de producción, las credenciales no deberían estar en el código fuente
-// sino en variables de entorno del servidor (ej: process.env.MERCADOPAGO_ACCESS_TOKEN)
-const environment = {
-  production: true,
-  mercadoPago: {
-    PUBLIC_KEY: "APP_USR-9f65b76b-c25b-4e70-a855-1f41c9ada6a1",
-    ACCESS_TOKEN: "APP_USR-5147269394129242-081117-37224fdb5e051c7998415bd5f81424a2-95355573",
-    CLIENT_ID: "5147269394129242",
-    CLIENT_SECRET: "r5aX8I8PuR4NYwPwXKmdLqTcoioWzyJc"
-  }
-};
+// Acceder a las variables de entorno para las credenciales de Mercado Pago
+// En producción en Render, estas variables serán inyectadas.
+// En desarrollo local, usarán los valores por defecto (ej. para pruebas)
+const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || 'TU_ACCESS_TOKEN_DE_DESARROLLO'; // Remplaza si lo necesitas para desarrollo local
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200'; // URL de tu frontend. En Render, será la URL de tu frontend.
 
-// Agregando credenciales
-// Usamos el ACCESS_TOKEN del objeto environment
-const client = new MercadoPagoConfig({ accessToken: environment.mercadoPago.ACCESS_TOKEN });
+const client = new MercadoPagoConfig({ accessToken: MERCADOPAGO_ACCESS_TOKEN });
 
 const app = express();
-const PORT = 3000; // El puerto de tu servidor backend
+const PORT = process.env.PORT || 3000; // Render asignará un puerto a través de process.env.PORT
 
-app.use(cors()); // Permite solicitudes CORS desde tu frontend Angular
-app.use(express.json()); // Permite que el servidor entienda JSON en el cuerpo de las solicitudes
+app.use(cors({ origin: FRONTEND_URL })); // Permite solicitudes CORS solo desde tu frontend URL
+app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Mercado Pago Backend is running!');
@@ -33,7 +24,7 @@ app.get('/', (req, res) => {
 app.post('/create_preference', async (req, res) => {
   try {
     const { items: cartItems } = req.body; // Esperamos un array de ítems del carrito
-    
+
     // Mapea los ítems del carrito al formato que Mercado Pago espera
     const formattedItems = cartItems.map(item => ({
       title: item.nombre,
@@ -45,16 +36,16 @@ app.post('/create_preference', async (req, res) => {
     const body = {
       items: formattedItems,
       back_urls: {
-        success: "http://localhost:4200/purchase-success", // URL a la que Mercado Pago redirigirá después de un pago exitoso
-        failure: "http://localhost:4200/purchase-failure", // URL para pagos fallidos
-        pending: "http://localhost:4200/purchase-pending"  // URL para pagos pendientes
+        success: `${FRONTEND_URL}/purchase-success`, // URL a la que Mercado Pago redirigirá después de un pago exitoso
+        failure: `${FRONTEND_URL}/purchase-failure`, // URL para pagos fallidos
+        pending: `${FRONTEND_URL}/purchase-pending`  // URL para pagos pendientes
       },
       auto_return: "approved",
     };
 
     const preference = new Preference(client);
     const result = await preference.create({ body });
-    
+
     res.json({
       id: result.id,
       init_point: result.init_point // La URL para redirigir al usuario al checkout de MP
