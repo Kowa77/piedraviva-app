@@ -1,4 +1,4 @@
-.purchase-status-container {
+    .purchase-status-container {
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -58,9 +58,9 @@
       background-color: #64748b;
       transform: translateY(-2px);
     }
-    .failure-bg {
-      background-color: #c53030; /* bg-red-700 */
+    .success-bg {
+      background-color: #2b6cb0; /* bg-blue-700 */
     }
-    .failure-color {
-      color: #feb2b2; /* text-red-300 */
+    .success-color {
+      color: #90cdf4; /* text-blue-300 */
     }
