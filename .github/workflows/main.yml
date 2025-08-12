@@ -7,7 +7,7 @@ on:
   # Si tu rama principal se llama diferente, cámbiala aquí.
   push:
     branches:
-      - main # O master, dependiendo de tu repositorio
+      - allproducts # O master, dependiendo de tu repositorio
 
   # Permite ejecutar este workflow manualmente desde la interfaz de GitHub Actions.
   workflow_dispatch:
