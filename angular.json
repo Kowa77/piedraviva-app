@@ -46,8 +46,7 @@
                 }
               ],
               "outputHashing": "all",
-              // === CAMBIO CLAVE AÑADIDO/MODIFICADO AQUÍ ===
-              "baseHref": "/piedraviva-app/" // Asegúrate que esta es la subcarpeta de tu repo de GitHub Pages
+              "baseHref": "/piedraviva-app/"
             },
             "development": {
               "optimization": false,
@@ -96,9 +95,9 @@
           "builder": "angular-cli-ghpages:deploy",
           "options": {
 
-            "baseHref": "/piedraviva-app/", // Coincide con el baseHref de la configuración de producción
-            "name": "Kowa77", // Manteniendo tu nombre de usuario de GitHub
-            "email": "estebangarriga@hotmail.com" // Manteniendo tu email de GitHub
+            "baseHref": "/piedraviva-app/",
+            "name": "Kowa77",
+            "email": "estebangarriga@hotmail.com"
           }
         }
       }
