@@ -46,7 +46,7 @@
                 }
               ],
               "outputHashing": "all",
-              "baseHref": "/"
+              "baseHref": "/piedraviva-app/"
             },
             "development": {
               "optimization": false,
@@ -89,6 +89,14 @@
               "src/styles.css"
             ],
             "scripts": []
+          }
+        },
+        "deploy": {
+          "builder": "angular-cli-ghpages:deploy",
+          "options": {
+            "baseHref": "/piedraviva-app/",
+            "name": "kowa77",
+            "email": "estebangarriga@hotmail.com"
           }
         }
       }
