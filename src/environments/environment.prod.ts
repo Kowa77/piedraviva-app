@@ -1,6 +1,7 @@
 // src/environments/environment.prod.ts
 export const environment = {
   production: true, // ¡IMPORTANTE! Establece esto a 'true' para producción
+  backendUrl: 'https://piedraviva-app-backend.onrender.com', // <-- URL de tu backend desplegado en Render.com
   firebaseConfig: {
     // ¡IMPORTANTE! Reemplaza estos valores con la configuración de tu proyecto de Firebase
     // Estos deberían ser los mismos que en environment.ts a menos que tengas un proyecto Firebase diferente para producción.

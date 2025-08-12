@@ -4,6 +4,7 @@
 
 export const environment = {
   production: false, // ¡IMPORTANTE! 'false' para desarrollo
+  backendUrl: 'http://localhost:3000', // <-- URL de tu backend en desarrollo local (ajusta el puerto si es diferente)
   firebaseConfig: {
     apiKey: "AIzaSyBwe-SvSjOdCdBfKG_Nv8hjJ4IE8Q-vS1g",
     authDomain: "piedraviva-20327.firebaseapp.com",
