@@ -1,16 +1,13 @@
-# Archivos y carpetas generados por Angular CLI y Node.js
+# Ignorar carpetas de Node.js
+node_modules/
 
-# dependencias de node
-node_modules/             # Ignora la carpeta node_modules del frontend
-backend/node_modules/     # Ignora la carpeta node_modules del backend
-
-# Salidas de compilación
-dist/                     # Ignora la carpeta 'dist' completa de Angular
-.angular/                 # Caché y archivos temporales de Angular
-.cache/                   # Otros directorios de caché
+# Ignorar carpetas de build de Angular
+dist/
+.angular/
+.cache/
 
 # IDE y editores (Visual Studio Code)
-.vscode/                  # Ignora las configuraciones de VS Code
+.vscode/
 
 # Build artifacts
 build/
@@ -25,7 +22,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Archivos de configuración de entorno (importante para seguridad)
-.env                      # Archivo .env local (para variables de entorno en desarrollo)
+.env
 .env.local
 .env.development.local
 .env.test.local
@@ -52,5 +49,5 @@ ehthumbs.db
 .project
 .classpath
 .settings/
-.angular-cli.json.old     # Si tienes archivos de configuración antiguos
-*.tsbuildinfo             # Caché de TypeScript
+.angular-cli.json.old
+*.tsbuildinfo
