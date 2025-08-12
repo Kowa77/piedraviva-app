@@ -1,0 +1,61 @@
+# Nombre del workflow, aparecerá en la pestaña "Actions" de tu repositorio.
+name: Deploy Angular to GitHub Pages
+
+# Define cuándo se ejecutará este workflow.
+on:
+  # Se ejecuta cada vez que se hace un "push" a la rama 'main' (o 'master').
+  # Si tu rama principal se llama diferente, cámbiala aquí.
+  push:
+    branches:
+      - main # O master, dependiendo de tu repositorio
+
+  # Permite ejecutar este workflow manualmente desde la interfaz de GitHub Actions.
+  workflow_dispatch:
+
+# Permisos que necesita este workflow.
+# Necesita 'contents: write' para poder publicar en GitHub Pages.
+permissions:
+  contents: write
+
+# Los "jobs" son las tareas que se ejecutarán en el workflow.
+jobs:
+  # Este es un job llamado "build-and-deploy".
+  build-and-deploy:
+    # El tipo de máquina virtual donde se ejecutará el job.
+    runs-on: ubuntu-latest
+
+    # Los "steps" son los pasos individuales dentro de un job.
+    steps:
+      # Paso 1: Checkout del código.
+      # Descarga tu repositorio en la máquina virtual.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Paso 2: Configurar Node.js.
+      # Instala la versión de Node.js necesaria para tu proyecto Angular.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Asegúrate de que esta versión sea compatible con tu Angular
+
+      # Paso 3: Instalar dependencias de Node.
+      - name: Install Dependencies
+        run: npm install
+
+      # Paso 4: Construir la aplicación Angular.
+      # El comando 'ng build' compila tu aplicación.
+      # --configuration production: Usa la configuración de producción.
+      # --base-href /piedraviva-app/: MUY IMPORTANTE. Esto debe coincidir con el nombre de tu repositorio.
+      # Si tu repositorio se llama 'mi-proyecto', entonces sería '--base-href /mi-proyecto/'.
+      # --output-path docs: Esto es crucial para GitHub Pages. GitHub Pages por defecto busca
+      # los archivos estáticos en una carpeta 'docs' en la raíz de tu rama 'gh-pages' o 'main'.
+      - name: Build Angular App
+        run: npm run build -- --configuration production --base-href /piedraviva-app/ --output-path docs
+
+      # Paso 5: Desplegar a GitHub Pages.
+      # Esta acción toma los archivos generados y los publica en tu sitio de GitHub Pages.
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }} # Token automático de GitHub
+          publish_dir: ./docs # La carpeta que contiene los archivos de tu aplicación compilada
