@@ -56,3 +56,4 @@ ehthumbs.db
 .settings/
 .angular-cli.json.old # Si tienes archivos de configuración antiguos
 *.tsbuildinfo        # Caché de TypeScript
+node_modules
