@@ -7,7 +7,7 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 // En producción en Render, estas variables serán inyectadas.
 // En desarrollo local, usarán los valores por defecto (ej. para pruebas)
 const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || 'TU_ACCESS_TOKEN_DE_DESARROLLO'; // Remplaza si lo necesitas para desarrollo local
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200'; // URL de tu frontend. En Render, será la URL de tu frontend.
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://kowa77.github.io/piedraviva-app/'; // URL de tu frontend. En Render, será la URL de tu frontend.
 
 const client = new MercadoPagoConfig({ accessToken: MERCADOPAGO_ACCESS_TOKEN });
 
