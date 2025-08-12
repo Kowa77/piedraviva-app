@@ -7,14 +7,32 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 // En producción en Render, estas variables serán inyectadas.
 // En desarrollo local, usarán los valores por defecto (ej. para pruebas)
 const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || 'TU_ACCESS_TOKEN_DE_DESARROLLO'; // Remplaza si lo necesitas para desarrollo local
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://kowa77.github.io/piedraviva-app/'; // URL de tu frontend. En Render, será la URL de tu frontend.
+
+// --- INICIO DE LOS CAMBIOS PARA CORS ---
+// Define todos los orígenes (URLs) desde los cuales tu frontend puede acceder a este backend.
+// IMPORTANTE: Asegúrate de que estas URLs sean exactamente como aparecen en la barra de direcciones del navegador
+// cuando accedes a tu frontend.
+const ALLOWED_FRONTEND_URLS = [
+  'https://kowa77.github.io', // Agrega el dominio base de GitHub Pages
+  'https://kowa77.github.io/piedraviva-app', // Agrega la URL específica de tu aplicación en GitHub Pages
+  'https://piedraviva-app-front.onrender.com' // Mantén esta si tu frontend también se despliega o desplegó en Render
+  // Si tienes otras URLs de frontend, añádelas aquí también.
+];
+
+// Opcional: Para las back_urls de Mercado Pago, puedes seguir usando una variable de entorno
+// o definirla directamente si solo tienes una. Aquí mantenemos la lógica actual pero con un nombre más claro.
+const MERCADOPAGO_FRONTEND_REDIRECT_URL = process.env.FRONTEND_URL || 'https://kowa77.github.io/piedraviva-app/';
+// --- FIN DE LOS CAMBIOS PARA CORS ---
+
 
 const client = new MercadoPagoConfig({ accessToken: MERCADOPAGO_ACCESS_TOKEN });
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Render asignará un puerto a través de process.env.PORT
 
-app.use(cors({ origin: FRONTEND_URL })); // Permite solicitudes CORS solo desde tu frontend URL
+// Configura CORS para permitir múltiples orígenes.
+// El middleware 'cors' ahora aceptará cualquier URL dentro de ALLOWED_FRONTEND_URLS.
+app.use(cors({ origin: ALLOWED_FRONTEND_URLS }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -36,9 +54,10 @@ app.post('/create_preference', async (req, res) => {
     const body = {
       items: formattedItems,
       back_urls: {
-        success: `${FRONTEND_URL}/purchase-success`, // URL a la que Mercado Pago redirigirá después de un pago exitoso
-        failure: `${FRONTEND_URL}/purchase-failure`, // URL para pagos fallidos
-        pending: `${FRONTEND_URL}/purchase-pending`  // URL para pagos pendientes
+        // Usa la variable para redirigir a Mercado Pago
+        success: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-success`, // URL a la que Mercado Pago redirigirá después de un pago exitoso
+        failure: `${MERCADAPAGO_FRONTEND_REDIRECT_URL}/purchase-failure`, // URL para pagos fallidos
+        pending: `${MERCADAPAGO_FRONTEND_REDIRECT_URL}/purchase-pending`  // URL para pagos pendientes
       },
       auto_return: "approved",
     };
