@@ -13,7 +13,7 @@ const ALLOWED_FRONTEND_URLS = [
   'https://piedraviva-app-front.onrender.com' // Mantén esta si tu frontend también se despliega o desplegó en Render
 ];
 
-// Corregido: La variable para las back_urls de Mercado Pago, ahora con el nombre correcto.
+// La variable para las back_urls de Mercado Pago
 const MERCADOPAGO_FRONTEND_REDIRECT_URL = process.env.FRONTEND_URL || 'https://kowa77.github.io/piedraviva-app/';
 
 const client = new MercadoPagoConfig({ accessToken: MERCADOPAGO_ACCESS_TOKEN });
@@ -37,11 +37,11 @@ app.post('/create_preference', async (req, res) => {
         return res.status(400).json({ error: 'El carrito de compras está vacío o no tiene el formato correcto.' });
     }
 
-    // Mapea los ítems del carrito al formato que Mercado Pago espera
+    // Corregido: Mapea las propiedades correctamente del frontend al formato de Mercado Pago
     const formattedItems = cartItems.map(item => ({
-      title: item.nombre,
-      quantity: Number(item.cantidad),
-      unit_price: Number(item.precio),
+      title: item.title,       // <-- Ahora usa item.title
+      quantity: Number(item.quantity), // <-- Ahora usa item.quantity
+      unit_price: Number(item.unit_price), // <-- Ahora usa item.unit_price
       currency_id: "UYU", // Moneda uruguaya
     }));
 
@@ -57,7 +57,6 @@ app.post('/create_preference', async (req, res) => {
     const body = {
       items: formattedItems,
       back_urls: {
-        // Corregido: Usando la variable con el nombre correcto aquí
         success: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-success`,
         failure: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-failure`,
         pending: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-pending`
