@@ -95,7 +95,7 @@
           "builder": "angular-cli-ghpages:deploy",
           "options": {
             "baseHref": "/piedraviva-app/",
-            "name": "kowa77",
+            "name": "Kowa77",
             "email": "estebangarriga@hotmail.com"
           }
         }
