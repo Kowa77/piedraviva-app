@@ -7,7 +7,8 @@
     "types": []
   },
   "files": [
-    "src/main.ts"
+    "src/main.ts",
+    "src/polyfills.ts" // ¡Añade esta línea!
   ],
   "include": [
     "src/**/*.d.ts"

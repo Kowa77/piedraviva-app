@@ -24,7 +24,12 @@
             "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "src/public",
+                "output": "/public/"
+              }
             ],
             "styles": [
               "src/styles.css"
@@ -42,7 +47,7 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumError": "6kb"
                 }
               ],
               "fileReplacements": [
@@ -91,7 +96,12 @@
             "karmaConfig": "karma.conf.js",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "src/public",
+                "output": "/public/"
+              }
             ],
             "styles": [
               "src/styles.css"
@@ -128,13 +138,17 @@
             "name": "Kowa77",
             "email": "estebangarriga@hotmail.com",
             "repo": "https://github.com/Kowa77/piedraviva-app.git",
-            "noBuild": false
+            "noBuild": false,
+            "dir": "dist/piedraviva-app"
           }
         },
         "deploy": {
           "builder": "angular-cli-ghpages:deploy",
           "options": {
-            "baseHref": "/piedraviva-app/"
+            "baseHref": "/piedraviva-app/",
+            "name": "Kowa77",
+            "email": "estebangarriga@hotmail.com",
+            "dir": "dist/piedraviva-app"
           }
         }
       }
