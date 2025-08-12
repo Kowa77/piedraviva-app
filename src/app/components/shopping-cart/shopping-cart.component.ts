@@ -25,7 +25,7 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
 
   private editedQuantities: Map<string, number> = new Map();
   // URL de tu servidor backend de Mercado Pago
-  private mercadoPagoBackendUrl = 'http://localhost:3000/create_preference';
+  private mercadoPagoBackendUrl = 'https://piedraviva-app-backend.onrender.com/create_preference';
 
   constructor(
     private cartService: CartService,
