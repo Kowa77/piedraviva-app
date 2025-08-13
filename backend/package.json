@@ -1,23 +1,24 @@
-    {
+{
       "name": "piedraviva-backend",
       "version": "1.0.0",
       "description": "Servidor backend para la aplicación Piedra Viva",
       "main": "server.js",
       "type": "module",
       "scripts": {
-        "start": "node server.js",
-        "dev": "nodemon server.js"
+            "start": "node server.js",
+            "dev": "nodemon server.js"
       },
       "keywords": [],
       "author": "Esteban Garriga",
       "license": "ISC",
       "dependencies": {
-        "cors": "^2.8.5",
-        "express": "^4.19.2",
-        "mercadopago": "^2.5.0",
-        "dotenv": "^16.4.5"
+            "cors": "^2.8.5",
+            "dotenv": "^16.6.1",
+            "express": "^4.19.2",
+            "firebase-admin": "^13.4.0",
+            "mercadopago": "^2.5.0"
       },
       "devDependencies": {
-        "nodemon": "^3.1.4"
+            "nodemon": "^3.1.4"
       }
-    }
+}

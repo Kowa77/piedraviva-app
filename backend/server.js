@@ -1,67 +1,99 @@
-// backend/server.js (o index.js)
+// backend/server.js
 import express from 'express';
 import cors from 'cors';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'; // Import Payment
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import dotenv from 'dotenv'; // Para cargar variables de entorno desde .env local
 
-// Acceder a las variables de entorno para las credenciales de Mercado Pago
-const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || 'TU_ACCESS_TOKEN_DE_DESARROLLO'; // Remplaza si lo necesitas para desarrollo local
+dotenv.config(); // Cargar variables de entorno al inicio
+
+// --- Inicialización de Firebase Admin SDK ---
+try {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+  initializeApp({
+    credential: cert(serviceAccount)
+  });
+  console.log('Firebase Admin SDK inicializado correctamente.');
+} catch (error) {
+  console.error('Error al inicializar Firebase Admin SDK. Asegúrate de que FIREBASE_SERVICE_ACCOUNT_KEY esté configurada correctamente:', error);
+  // No salir aquí en desarrollo, pero en producción podrías quererlo.
+}
+
+const db = getFirestore(); // Obtener la instancia de Firestore
+
+// --- Credenciales y URLs ---
+const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
+const client = new MercadoPagoConfig({ accessToken: MERCADOPAGO_ACCESS_TOKEN });
 
 // Define todos los orígenes (URLs) desde los cuales tu frontend puede acceder a este backend.
 const ALLOWED_FRONTEND_URLS = [
-  'https://kowa77.github.io', // Agrega el dominio base de GitHub Pages
-  'https://kowa77.github.io/piedraviva-app', // Agrega la URL específica de tu aplicación en GitHub Pages
-  'https://piedraviva-app-front.onrender.com' // Mantén esta si tu frontend también se despliega o desplegó en Render
+  'https://kowa77.github.io',
+  'https://kowa77.github.io/piedraviva-app',
+  // Añade otros dominios si tu frontend se aloja en múltiples lugares
 ];
 
-// La variable para las back_urls de Mercado Pago
+// La URL de tu frontend para las redirecciones post-pago de Mercado Pago
 const MERCADOPAGO_FRONTEND_REDIRECT_URL = process.env.FRONTEND_URL || 'https://kowa77.github.io/piedraviva-app/';
 
-const client = new MercadoPagoConfig({ accessToken: MERCADOPAGO_ACCESS_TOKEN });
+// La URL de tu backend para que Mercado Pago envíe las notificaciones (webhooks/IPN)
+const BACKEND_PUBLIC_URL = process.env.BACKEND_URL || 'http://localhost:3000'; // Usa localhost para desarrollo
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configuración de CORS
 app.use(cors({ origin: ALLOWED_FRONTEND_URLS }));
-app.use(express.json());
+app.use(express.json()); // Middleware para parsear JSON en el body de las peticiones
+
+// --- Rutas ---
 
 app.get('/', (req, res) => {
   res.send('Mercado Pago Backend is running!');
 });
 
+// Endpoint para crear la preferencia de pago en Mercado Pago
 app.post('/create_preference', async (req, res) => {
   try {
-    const { items: cartItems } = req.body; // Esperamos un array de ítems del carrito
+    // Esperamos un array de ítems del carrito y un userId (ID del usuario autenticado)
+    const { items: cartItems, userId } = req.body;
 
-    // AGREGAR VALIDACIÓN DE ENTRADA AQUI
+    // Validaciones iniciales
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-        return res.status(400).json({ error: 'El carrito de compras está vacío o no tiene el formato correcto.' });
+      return res.status(400).json({ error: 'El carrito de compras está vacío o no tiene el formato correcto.' });
+    }
+    if (!userId) {
+      return res.status(400).json({ error: 'Se requiere un ID de usuario para crear la preferencia.' });
     }
 
-    // Corregido: Mapea las propiedades correctamente del frontend al formato de Mercado Pago
+    // Mapeo de ítems del formato frontend al formato de Mercado Pago
     const formattedItems = cartItems.map(item => ({
-      title: item.title,       // <-- Ahora usa item.title
-      quantity: Number(item.quantity), // <-- Ahora usa item.quantity
-      unit_price: Number(item.unit_price), // <-- Ahora usa item.unit_price
+      title: item.title,
+      quantity: Number(item.quantity),
+      unit_price: Number(item.unit_price),
       currency_id: "UYU", // Moneda uruguaya
     }));
 
-    // Otra validación: asegurar que los números son válidos
+    // Validación de datos numéricos y de texto de los ítems
     const invalidItems = formattedItems.filter(item =>
-        !item.title || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unit_price) || item.unit_price <= 0
+      !item.title || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unit_price) || item.unit_price <= 0
     );
 
     if (invalidItems.length > 0) {
-        return res.status(400).json({ error: 'Algunos ítems del carrito tienen datos inválidos (nombre, cantidad o precio).' });
+      return res.status(400).json({ error: 'Algunos ítems del carrito tienen datos inválidos (nombre, cantidad o precio).' });
     }
 
     const body = {
       items: formattedItems,
-      back_urls: {
+      back_urls: { // URLs a las que el usuario es redirigido después de la compra
         success: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-success`,
         failure: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-failure`,
         pending: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-pending`
       },
-      auto_return: "approved",
+      auto_return: "approved", // Redirigir automáticamente si el pago es aprobado
+      external_reference: userId, // Aquí guardamos el userId para recuperarlo en el webhook
+      // URL a la que Mercado Pago enviará las notificaciones de eventos de pago (IPN)
+      notification_url: `${BACKEND_PUBLIC_URL}/webhook/mercadopago`,
     };
 
     const preference = new Preference(client);
@@ -69,12 +101,13 @@ app.post('/create_preference', async (req, res) => {
 
     res.json({
       id: result.id,
-      init_point: result.init_point
+      init_point: result.init_point // URL a la que el frontend redirigirá al usuario
     });
-  } catch (error) {
-    console.error('Error creating preference:', error);
 
-    let errorMessage = 'Error al crear la preferencia;(';
+  } catch (error) {
+    console.error('Error creando preferencia de pago:', error);
+
+    let errorMessage = 'Error al crear la preferencia de pago.';
     let statusCode = 500;
 
     if (error.status && error.message) {
@@ -88,6 +121,64 @@ app.post('/create_preference', async (req, res) => {
   }
 });
 
+// Endpoint para recibir las notificaciones de Mercado Pago (Webhooks/IPN)
+app.post('/webhook/mercadopago', async (req, res) => {
+  console.log('--- Notificación de Mercado Pago (Webhook) Recibida ---');
+  console.log('Query Params:', req.query); // Contiene 'topic' y 'id'
+  console.log('Body (puede estar vacío para IPN):', req.body); // El cuerpo puede no ser relevante para IPN v1
+
+  const { topic, id } = req.query; // Para IPN v1, los parámetros clave están en la query
+
+  if (topic === 'payment') {
+    try {
+      // Usar el SDK de Mercado Pago para obtener los detalles completos del pago
+      const paymentInstance = new Payment(client);
+      const paymentDetails = await paymentInstance.get({ id: id });
+
+      console.log('Detalles del Pago Obtenidos:', paymentDetails);
+
+      if (paymentDetails.status === 'approved') {
+        const userId = paymentDetails.external_reference; // Recuperar el userId
+        const appId = process.env.APP_ID || 'default-app-id'; // Obtener el ID de la aplicación
+
+        // Estructura de la compra a guardar en Firestore
+        const purchaseData = {
+          paymentId: paymentDetails.id,
+          userId: userId,
+          items: paymentDetails.additional_info.items, // Los ítems asociados al pago
+          transactionAmount: paymentDetails.transaction_amount,
+          status: paymentDetails.status,
+          dateCreated: new Date(paymentDetails.date_created),
+          dateApproved: new Date(paymentDetails.date_approved),
+          preferenceId: paymentDetails.preference_id,
+          // Puedes añadir más campos relevantes aquí
+        };
+
+        // Ruta de Firestore para guardar compras de usuarios:
+        // /artifacts/{appId}/users/{userId}/purchases/{documentId}
+        const userPurchasesCollectionRef = db.collection(`artifacts/${appId}/users/${userId}/purchases`);
+
+        await userPurchasesCollectionRef.add(purchaseData); // Añadir un nuevo documento a la colección
+        console.log(`Compra ${paymentDetails.id} guardada para el usuario ${userId} en Firestore.`);
+      } else {
+        console.log(`El pago ${paymentDetails.id} tiene estado ${paymentDetails.status}, no se guarda en el historial de compras.`);
+      }
+      res.sendStatus(200); // ES CRÍTICO responder con 200 OK para que Mercado Pago no reintente la notificación
+    } catch (error) {
+      console.error('Error al procesar el webhook de Mercado Pago:', error);
+      res.sendStatus(500); // Responder con 500 si hay un error en el procesamiento
+    }
+  } else {
+    // Manejar otros tipos de notificaciones si es necesario (ej: 'merchant_order')
+    console.log(`Tipo de webhook no manejado: ${topic}`);
+    res.sendStatus(200); // Responder 200 para tipos no manejados para evitar reintentos innecesarios
+  }
+});
+
+
+// Iniciar el servidor
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Servidor de backend ejecutándose en http://localhost:${PORT}`);
+  console.log(`FRONTEND_URL: ${MERCADOPAGO_FRONTEND_REDIRECT_URL}`);
+  console.log(`BACKEND_URL (para webhooks): ${BACKEND_PUBLIC_URL}`);
 });
