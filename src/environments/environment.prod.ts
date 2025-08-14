@@ -11,6 +11,7 @@ export const environment = {
     storageBucket: "piedraviva-20327.firebasestorage.app",
     messagingSenderId: "895243777977",
     appId: "1:895243777977:web:8dff1a8e88b23df2c82868",
-    measurementId: "G-HLK1QHRRQ8" // Este es opcional
+    measurementId: "G-HLK1QHRRQ8", // Este es opcional
+    databaseURL: "https://piedraviva-20327-default-rtdb.firebaseio.com/" // ¡¡¡NUEVA LÍNEA CLAVE PARA REALTIME DATABASE!!!
   }
 };

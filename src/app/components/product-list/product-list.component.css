@@ -44,21 +44,6 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Anade una sombra al texto para que resalte */
 }
 
-/* REMOVIDO: Estilos para el contenedor del logo en la lista de pizzas */
-/* .company-logo-container-list {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 1rem;
-}
-
-.company-logo-list {
-  max-width: 180px;
-  height: auto;
-  display: inline-block;
-  border-radius: 0.5rem;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-} */
-
 /* Contenedor principal para el efecto de perspectiva */
 .pizza-grid-container {
   perspective: 1500px; /* Define la profundidad para los elementos 3D */
@@ -176,6 +161,33 @@
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-md */
   white-space: nowrap; /* Evita que los sabores se rompan en varias lineas */
 }
+
+/* NUEVO: Estilos para el botón "Ver Detalles" */
+.view-details-button {
+  width: calc(100% - 3rem); /* Ocupa casi todo el ancho, dejando padding */
+  background-color: #e53e3e; /* Color rojo vibrante, similar al header */
+  color: #fff;
+  padding: 0.75rem 1rem; /* Espaciado */
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0 1.5rem 1rem 1.5rem; /* Margen para centrar y separar del footer */
+  box-sizing: border-box; /* Incluye padding y border en el ancho */
+}
+
+.view-details-button:hover {
+  background-color: #c53030; /* Un rojo más oscuro al pasar el ratón */
+  transform: translateY(-2px); /* Pequeña elevación */
+}
+
+.view-details-button:active {
+  transform: translateY(0); /* Efecto de "presionado" */
+}
+
 
 /* Seccion de Cantidad y Boton "Agregar al Carrito" */
 .add-to-cart-section {

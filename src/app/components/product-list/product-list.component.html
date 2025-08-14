@@ -23,7 +23,8 @@
             @for (product of products; track product.id) {
               <div class="pizza-card-3d">
 
-                <!-- El enlace ahora envuelve solo la parte de la tarjeta que no es el boton de agregar al carrito -->
+                <!-- El enlace ahora envuelve la parte de la tarjeta que no es el boton de agregar al carrito -->
+                <!-- Este 'a' es clickable para ir a la vista de detalle -->
                 <a [routerLink]="['/product', product.id]" class="pizza-card-link-content">
                   <!-- Imagen del producto -->
                   <div class="pizza-image"
@@ -50,6 +51,9 @@
                       }
                     </div>
                   </div>
+                  <!-- NUEVO: Botón explícito para "Ver Detalles" -->
+                  <!-- Este botón también está dentro del routerLink, haciendo que todo el enlace sea un área de clic para los detalles -->
+                  <button class="view-details-button">Ver Detalles</button>
                 </a>
                 <!-- Seccion de Cantidad y Boton "Agregar al Carrito" -->
                 <div class="add-to-cart-section">

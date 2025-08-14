@@ -28,7 +28,7 @@ export class ProductService {
 
     // Usamos onValue para escuchar cambios en tiempo real
     return new Observable<Product[]>(observer => {
-      onValue(pizzasRef, (snapshot) => {
+      const unsubscribe = onValue(pizzasRef, (snapshot) => {
         const pizzas: Product[] = [];
         snapshot.forEach(childSnapshot => {
           const pizzaData = childSnapshot.val();
@@ -42,6 +42,8 @@ export class ProductService {
       }, (error) => {
         observer.error(error);
       });
+      // Devolvemos una función de limpieza para desuscribirse cuando el Observable se desuscriba
+      return () => unsubscribe();
     });
   }
 
@@ -55,7 +57,7 @@ export class ProductService {
 
     // Usamos onValue para escuchar cambios en tiempo real
     return new Observable<Product[]>(observer => {
-      onValue(bebidasRef, (snapshot) => {
+      const unsubscribe = onValue(bebidasRef, (snapshot) => {
         const bebidas: Product[] = [];
         snapshot.forEach(childSnapshot => {
           const bebidaData = childSnapshot.val();
@@ -68,6 +70,8 @@ export class ProductService {
       }, (error) => {
         observer.error(error);
       });
+      // Devolvemos una función de limpieza para desuscribirse cuando el Observable se desuscriba
+      return () => unsubscribe();
     });
   }
 
@@ -89,6 +93,7 @@ export class ProductService {
   /**
    * Obtiene los datos de un producto específico por su ID.
    * Intenta buscar primero en pizzas, luego en bebidas.
+   * Usa onValue para escuchar cambios en tiempo real y emitir undefined si no se encuentra.
    * @param id El ID del producto a buscar.
    * @returns Un Observable que emite los datos del producto o undefined si no se encuentra.
    */
@@ -97,32 +102,45 @@ export class ProductService {
     const bebidaRef = ref(this.db, `bebidas/${id}`);
 
     const pizza$ = new Observable<Product | undefined>(observer => {
-      get(pizzaRef).then(snapshot => { // Usamos 'get' para una lectura única
+      const unsubscribe = onValue(pizzaRef, (snapshot) => {
         const pizzaData = snapshot.val();
         if (pizzaData) {
           observer.next({ ...pizzaData, id: snapshot.key || '', tipo: 'pizza' } as Product);
         } else {
-          observer.next(undefined);
+          observer.next(undefined); // Emite undefined si no se encuentra la pizza
         }
-        observer.complete(); // Completa el observable después de la primera emisión
-      }).catch(error => observer.error(error));
+      }, (error) => {
+        observer.error(error);
+      });
+      return () => unsubscribe();
     });
 
     const bebida$ = new Observable<Product | undefined>(observer => {
-      get(bebidaRef).then(snapshot => { // Usamos 'get' para una lectura única
+      const unsubscribe = onValue(bebidaRef, (snapshot) => {
         const bebidaData = snapshot.val();
         if (bebidaData) {
           observer.next({ ...bebidaData, id: snapshot.key || '' } as Product);
         } else {
-          observer.next(undefined);
+          observer.next(undefined); // Emite undefined si no se encuentra la bebida
         }
-        observer.complete(); // Completa el observable después de la primera emisión
-      }).catch(error => observer.error(error));
+      }, (error) => {
+        observer.error(error);
+      });
+      return () => unsubscribe();
     });
 
-    // Combina los resultados y retorna el primero que exista
+    // Combina los resultados de ambos observables y retorna el primero que exista y no sea undefined
     return combineLatest([pizza$, bebida$]).pipe(
-      map(([pizza, bebida]) => pizza || bebida)
+      map(([pizza, bebida]) => pizza || bebida), // Retorna pizza si existe, de lo contrario bebida
+      map(product => {
+        // Si ambos observables emitieron undefined, el resultado combinado también será undefined
+        if (product === undefined) {
+          console.log(`Producto con ID ${id} no encontrado en pizzas ni bebidas.`);
+        } else {
+          console.log(`Producto con ID ${id} encontrado:`, product);
+        }
+        return product;
+      })
     );
   }
 

@@ -1,73 +1,67 @@
 <div class="detail-main-container">
   <div class="detail-content-wrapper">
 
-    <!-- Botón de Volver -->
+    <!-- Botón de Volver siempre visible -->
     <div class="back-button-container">
       <a routerLink="/" class="back-button">← Volver al Menú</a>
     </div>
 
-    @if (loading) {
-      <!-- Muestra el mensaje de carga si loading es true -->
-      <div class="loading-message-detail">
-        <p>Cargando detalles del producto...</p>
-      </div>
-    } @else if (errorMessage) {
-      <!-- Muestra el mensaje de error si hay un errorMessage -->
-      <div class="not-found-message">
-        <p>{{ errorMessage }}</p>
-      </div>
-    } @else {
-      <!-- Si no está cargando y no hay error, intentamos obtener el producto del observable -->
-      @if (product$ | async; as product) {
-        <!-- Si el producto existe, lo mostramos -->
-        @if (product) {
-          <div class="product-detail-card">
-            <div class="product-detail-image-container">
-              <img [src]="product.imagenUrl || ('https://placehold.co/600x400/FF5733/FFFFFF?text=' + encodeURIComponent(product.nombre || 'Producto'))"
-                   alt="Imagen de {{ product.nombre }}"
-                   class="product-detail-image">
-            </div>
-            <div class="product-detail-info">
-              <h2 class="product-detail-name">{{ product.nombre }}</h2>
-              <p class="product-detail-description">{{ product.descripcion }}</p>
+    <!-- El async pipe se suscribe aquí para activar el observable product$ -->
+    @if (product$ | async; as product) {
+      <!-- Si hay un producto y no estamos en estado de "cargando" (lo que significa que la carga terminó y hubo éxito) -->
+      @if (product && !loading) {
+        <div class="product-detail-card">
+          <div class="product-detail-image-container">
+            <img [src]="product.imagenUrl || ('https://placehold.co/600x400/FF5733/FFFFFF?text=' + encodeURIComponent(product.nombre || 'Producto'))"
+                 alt="Imagen de {{ product.nombre }}"
+                 class="product-detail-image">
+          </div>
+          <div class="product-detail-info">
+            <h2 class="product-detail-name">{{ product.nombre }}</h2>
+            <p class="product-detail-description">{{ product.descripcion }}</p>
 
-              @if (isPizza(product) && product.sabores.length) { <!-- Corregido: .length en lugar de ?.length -->
-                <div class="product-detail-flavors">
-                  @for (sabor of product.sabores; track $index) {
-                    <span class="product-flavor-tag-detail">{{ sabor }}</span>
-                  }
-                </div>
-              }
+            @if (isPizza(product) && product.sabores && product.sabores.length) {
+              <div class="product-detail-flavors">
+                @for (sabor of product.sabores; track $index) {
+                  <span class="product-flavor-tag-detail">{{ sabor }}</span>
+                }
+              </div>
+            }
 
-              <div class="product-detail-price-section">
-                <span class="product-detail-price">{{ product.precio | currency:'UYU':'$':'1.2-2' }}</span>
+            <div class="product-detail-price-section">
+              <span class="product-detail-price">{{ product.precio | currency:'UYU':'$':'1.2-2' }}</span>
 
-                <div class="add-to-cart-controls">
-                    <button (click)="decrementQuantity()" class="quantity-button">-</button>
-                    <input
-                      type="number"
-                      min="1"
-                      [value]="selectedQuantity"
-                      (input)="onQuantityInputChange($event)"
-                      class="quantity-input">
-                    <button (click)="incrementQuantity()" class="quantity-button">+</button>
-                    <button (click)="addToCart(product)" class="add-button">Agregar al Carrito</button>
-                </div>
+              <div class="add-to-cart-controls">
+                  <button (click)="decrementQuantity()" class="quantity-button">-</button>
+                  <input
+                    type="number"
+                    min="1"
+                    [value]="selectedQuantity"
+                    (input)="onQuantityInputChange($event)"
+                    class="quantity-input">
+                  <button (click)="incrementQuantity()" class="quantity-button">+</button>
+                  <button (click)="addToCart(product)" class="add-button">Agregar al Carrito</button>
               </div>
             </div>
           </div>
-        } @else {
-          <!-- Si el observable emitió undefined (producto no encontrado después de la carga) -->
-          <div class="not-found-message">
-            <p>Producto no encontrado.</p>
-          </div>
-        }
-      } @else {
-        <!-- Esto manejaría un caso donde products$ no emite nada o se completa sin valor -->
+        </div>
+      } @else if (!product && !loading && !errorMessage) {
+        <!-- Si no hay producto, no está cargando y no hay mensaje de error explícito (ej. ID inválido/no existente) -->
         <div class="not-found-message">
           <p>Producto no encontrado o error desconocido en el flujo de datos.</p>
         </div>
       }
+    }
+
+    <!-- Mensajes de estado: cargando o error -->
+    @if (loading) {
+      <div class="loading-message-detail">
+        <p>Cargando detalles del producto...</p>
+      </div>
+    } @else if (errorMessage) {
+      <div class="not-found-message">
+        <p>{{ errorMessage }}</p>
+      </div>
     }
   </div>
 </div>
