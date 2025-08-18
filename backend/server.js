@@ -1,64 +1,79 @@
-// backend/server.js
 import express from 'express';
 import cors from 'cors';
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'; // Import Payment
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
+import dotenv from 'dotenv';
+import path from 'path'; // Necesitamos el módulo 'path' para resolver rutas de archivos
+import { fileURLToPath } from 'url'; // Para obtener __dirname en módulos ES
+import fs from 'fs'; // <-- ¡NUEVA IMPORTACIÓN! Módulo para trabajar con el sistema de archivos
+
+// Importa las funciones modulares de Firebase Admin SDK
 import { initializeApp, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import dotenv from 'dotenv'; // Para cargar variables de entorno desde .env local
+import { getDatabase } from 'firebase-admin/database';
+import { getAuth } from 'firebase-admin/auth';
 
-dotenv.config(); // Cargar variables de entorno al inicio
-
-// --- Inicialización de Firebase Admin SDK ---
-try {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-  initializeApp({
-    credential: cert(serviceAccount)
-  });
-  console.log('Firebase Admin SDK inicializado correctamente.');
-} catch (error) {
-  console.error('Error al inicializar Firebase Admin SDK. Asegúrate de que FIREBASE_SERVICE_ACCOUNT_KEY esté configurada correctamente:', error);
-  // No salir aquí en desarrollo, pero en producción podrías quererlo.
-}
-
-const db = getFirestore(); // Obtener la instancia de Firestore
-
-// --- Credenciales y URLs ---
-const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
-const client = new MercadoPagoConfig({ accessToken: MERCADOPAGO_ACCESS_TOKEN });
-
-// Define todos los orígenes (URLs) desde los cuales tu frontend puede acceder a este backend.
-const ALLOWED_FRONTEND_URLS = [
-  'https://kowa77.github.io',
-  'https://kowa77.github.io/piedraviva-app',
-  // Añade otros dominios si tu frontend se aloja en múltiples lugares
-];
-
-// La URL de tu frontend para las redirecciones post-pago de Mercado Pago
-const MERCADOPAGO_FRONTEND_REDIRECT_URL = process.env.FRONTEND_URL || 'https://kowa77.github.io/piedraviva-app/';
-
-// La URL de tu backend para que Mercado Pago envíe las notificaciones (webhooks/IPN)
-const BACKEND_PUBLIC_URL = process.env.BACKEND_URL || 'http://localhost:3000'; // Usa localhost para desarrollo
+// Carga las variables de entorno desde el archivo .env
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de CORS
-app.use(cors({ origin: ALLOWED_FRONTEND_URLS }));
-app.use(express.json()); // Middleware para parsear JSON en el body de las peticiones
+// Obtener __dirname para módulos ES (necesario para path.resolve)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// --- Rutas ---
+// Middleware para habilitar CORS (Cross-Origin Resource Sharing)
+app.use(cors());
+// Middleware para parsear el cuerpo de las solicitudes como JSON
+app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('Mercado Pago Backend is running!');
+// --- Inicialización de Firebase Admin SDK ---
+let authAdmin;
+let db; // Variable para la instancia de Realtime Database
+try {
+  // 1. OBTENER LA CLAVE DEL ENTORNO
+  const serviceAccountKeyString  = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (serviceAccountKeyString ) {
+        const serviceAccount = JSON.parse(serviceAccountKeyString);
+    initializeApp({
+      credential: cert(serviceAccount),
+      databaseURL: process.env.FIREBASE_DATABASE_URL
+    });
+    console.log('Firebase Admin SDK inicializado con la clave de entorno.');
+
+  }else {
+     const serviceAccountFileName = process.env.FIREBASE_SERVICE_ACCOUNT_FILE;
+    if (!serviceAccountFileName) {
+      throw new Error('No se especificó un nombre de archivo para la clave de servicio en el .env');
+    }
+    const serviceAccountPath = path.resolve(__dirname, serviceAccountFileName);
+    const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+    initializeApp({
+      credential: cert(serviceAccount),
+      databaseURL: process.env.FIREBASE_DATABASE_URL
+    });
+    console.log('Firebase Admin SDK inicializado desde el archivo de clave.');
+  }
+  // Asignar las instancias de Firebase a las variables globales
+  authAdmin = getAuth();
+  db = getDatabase();
+
+
+} catch (error) {
+  console.error('Error al inicializar Firebase Admin SDK:', error);
+  // No inicializar authAdmin y db para evitar errores posteriores
+}
+
+
+// --- Configuración de Mercado Pago ---
+const client = new MercadoPagoConfig({
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
 });
 
-// Endpoint para crear la preferencia de pago en Mercado Pago
+// Ruta para crear una preferencia de pago en Mercado Pago
 app.post('/create_preference', async (req, res) => {
   try {
-    // Esperamos un array de ítems del carrito y un userId (ID del usuario autenticado)
-    const { items: cartItems, userId } = req.body;
+    const { items: cartItems, userId } = req.body; // userId es el UID del usuario logueado en Firebase Auth
 
-    // Validaciones iniciales
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       return res.status(400).json({ error: 'El carrito de compras está vacío o no tiene el formato correcto.' });
     }
@@ -68,10 +83,11 @@ app.post('/create_preference', async (req, res) => {
 
     // Mapeo de ítems del formato frontend al formato de Mercado Pago
     const formattedItems = cartItems.map(item => ({
-      title: item.title,
-      quantity: Number(item.quantity),
-      unit_price: Number(item.unit_price),
+      title: item.nombre, // Usar 'nombre' de tu modelo Product
+      quantity: Number(item.cantidad),
+      unit_price: Number(item.precio),
       currency_id: "UYU", // Moneda uruguaya
+      picture_url: item.imagenUrl // URL de la imagen del producto
     }));
 
     // Validación de datos numéricos y de texto de los ítems
@@ -86,14 +102,14 @@ app.post('/create_preference', async (req, res) => {
     const body = {
       items: formattedItems,
       back_urls: { // URLs a las que el usuario es redirigido después de la compra
-        success: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-success`,
-        failure: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-failure`,
-        pending: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-pending`
+        success: `${process.env.FRONTEND_URL}/purchase-success`,
+        failure: `${process.env.FRONTEND_URL}/purchase-failure`,
+        pending: `${process.env.FRONTEND_URL}/purchase-pending`
       },
       auto_return: "approved", // Redirigir automáticamente si el pago es aprobado
       external_reference: userId, // Aquí guardamos el userId para recuperarlo en el webhook
       // URL a la que Mercado Pago enviará las notificaciones de eventos de pago (IPN)
-      notification_url: `${BACKEND_PUBLIC_URL}/webhook/mercadopago`,
+      notification_url: `${process.env.BACKEND_URL}/webhook/mercadopago`, // Asegúrate que BACKEND_URL esté definido
     };
 
     const preference = new Preference(client);
@@ -124,14 +140,13 @@ app.post('/create_preference', async (req, res) => {
 // Endpoint para recibir las notificaciones de Mercado Pago (Webhooks/IPN)
 app.post('/webhook/mercadopago', async (req, res) => {
   console.log('--- Notificación de Mercado Pago (Webhook) Recibida ---');
-  console.log('Query Params:', req.query); // Contiene 'topic' y 'id'
-  console.log('Body (puede estar vacío para IPN):', req.body); // El cuerpo puede no ser relevante para IPN v1
+  console.log('Query Params:', req.query);
+  console.log('Body (puede estar vacío para IPN):', req.body);
 
-  const { topic, id } = req.query; // Para IPN v1, los parámetros clave están en la query
+  const { topic, id } = req.query;
 
   if (topic === 'payment') {
     try {
-      // Usar el SDK de Mercado Pago para obtener los detalles completos del pago
       const paymentInstance = new Payment(client);
       const paymentDetails = await paymentInstance.get({ id: id });
 
@@ -139,46 +154,60 @@ app.post('/webhook/mercadopago', async (req, res) => {
 
       if (paymentDetails.status === 'approved') {
         const userId = paymentDetails.external_reference; // Recuperar el userId
-        const appId = process.env.APP_ID || 'default-app-id'; // Obtener el ID de la aplicación
 
-        // Estructura de la compra a guardar en Firestore
+        // Estructura de la compra a guardar en Realtime Database
         const purchaseData = {
           paymentId: paymentDetails.id,
           userId: userId,
           items: paymentDetails.additional_info.items, // Los ítems asociados al pago
           transactionAmount: paymentDetails.transaction_amount,
           status: paymentDetails.status,
-          dateCreated: new Date(paymentDetails.date_created),
-          dateApproved: new Date(paymentDetails.date_approved),
+          dateCreated: paymentDetails.date_created,
+          dateApproved: paymentDetails.date_approved,
           preferenceId: paymentDetails.preference_id,
-          // Puedes añadir más campos relevantes aquí
         };
 
-        // Ruta de Firestore para guardar compras de usuarios:
-        // /artifacts/{appId}/users/{userId}/purchases/{documentId}
-        const userPurchasesCollectionRef = db.collection(`artifacts/${appId}/users/${userId}/purchases`);
-
-        await userPurchasesCollectionRef.add(purchaseData); // Añadir un nuevo documento a la colección
-        console.log(`Compra ${paymentDetails.id} guardada para el usuario ${userId} en Firestore.`);
+        // Ruta de Realtime Database para guardar compras de usuarios:
+        // /purchases/{userId}/{unique_purchase_id}
+        await db.ref(`purchases/${userId}`).push(purchaseData);
+        console.log(`Compra ${paymentDetails.id} guardada para el usuario ${userId} en Realtime Database.`);
       } else {
         console.log(`El pago ${paymentDetails.id} tiene estado ${paymentDetails.status}, no se guarda en el historial de compras.`);
       }
-      res.sendStatus(200); // ES CRÍTICO responder con 200 OK para que Mercado Pago no reintente la notificación
+      res.sendStatus(200); // CRÍTICO responder con 200 OK para que Mercado Pago no reintente
     } catch (error) {
       console.error('Error al procesar el webhook de Mercado Pago:', error);
       res.sendStatus(500); // Responder con 500 si hay un error en el procesamiento
     }
   } else {
-    // Manejar otros tipos de notificaciones si es necesario (ej: 'merchant_order')
     console.log(`Tipo de webhook no manejado: ${topic}`);
-    res.sendStatus(200); // Responder 200 para tipos no manejados para evitar reintentos innecesarios
+    res.sendStatus(200);
   }
 });
 
+// Ruta para crear un token de autenticación de Firebase personalizado
+app.post('/create-custom-token', async (req, res) => {
+  const { uid } = req.body;
 
-// Iniciar el servidor
+  if (!uid) {
+    return res.status(400).json({ error: 'UID de usuario requerido.' });
+  }
+
+  try {
+    if (!authAdmin) {
+      throw new Error('Firebase Auth Admin no está inicializado.');
+    }
+    const customToken = await authAdmin.createCustomToken(uid);
+    res.json({ customToken });
+  } catch (error) {
+    console.error('Error al crear el token personalizado de Firebase:', error);
+    res.status(500).json({ error: 'Error al crear el token de autenticación.' });
+  }
+});
+
+// Inicia el servidor
 app.listen(PORT, () => {
   console.log(`Servidor de backend ejecutándose en http://localhost:${PORT}`);
-  console.log(`FRONTEND_URL: ${MERCADOPAGO_FRONTEND_REDIRECT_URL}`);
-  console.log(`BACKEND_URL (para webhooks): ${BACKEND_PUBLIC_URL}`);
+  console.log(`FRONTEND_URL: ${process.env.FRONTEND_URL}`);
+  console.log(`BACKEND_URL (para webhooks): ${process.env.BACKEND_URL}`);
 });

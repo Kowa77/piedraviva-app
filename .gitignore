@@ -51,3 +51,8 @@ ehthumbs.db
 .settings/
 .angular-cli.json.old
 *.tsbuildinfo
+# Ignorar archivos de claves de servicio de Firebase
+backend/piedraviva-20327-firebase-adminsdk-fbsvc-09566cf2a6.json
+
+# Ignorar variables de entorno
+backend/.env
