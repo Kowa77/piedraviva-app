@@ -276,7 +276,7 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }
   }
 
-// CORRECTED checkout() method
+// CORRECTED checkout() method with data type conversion
 async checkout(): Promise<void> {
   if (!this.userId) {
     alert('Debes iniciar sesión para completar la compra.');
@@ -298,12 +298,12 @@ async checkout(): Promise<void> {
   try {
     const requestBody = {
       items: itemsForMercadoPago,
-      userId: this.userId  // <-- THIS IS THE MISSING PIECE!
+      userId: this.userId
     };
 
     const response = await this.http.post<{ id: string, init_point: string }>(
       this.mercadoPagoBackendUrl,
-      requestBody // <-- Use the new object that includes the userId
+      requestBody
     ).toPromise();
 
     if (response && response.init_point) {

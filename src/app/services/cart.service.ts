@@ -19,30 +19,32 @@ export class CartService {
     this.db = getDatabase(this.app); // Obtenemos la instancia de la base de datos modular
   }
 
-  /**
-   * Obtiene el carrito de un usuario específico en tiempo real.
-   * @param userId El UID del usuario.
-   * @returns Un Observable que emite un array de CartItem.
-   */
   getCart(userId: string): Observable<CartItem[]> {
-    if (!userId) {
-      return of([]);
-    }
-    const cartItemsRef = ref(this.db, `carts/${userId}/items`);
-    return new Observable<CartItem[]>(observer => {
-      const unsubscribe = onValue(cartItemsRef, (snapshot) => {
-        const items: CartItem[] = [];
-        snapshot.forEach(childSnapshot => {
-          items.push(childSnapshot.val() as CartItem);
-        });
-        observer.next(items);
-      }, (error) => {
-        observer.error(error);
-      });
-      // Devolvemos la función de limpieza para la desuscripción
-      return { unsubscribe: unsubscribe };
-    });
-  }
+    if (!userId) {
+      return of([]);
+    }
+    const cartItemsRef = ref(this.db, `carts/${userId}/items`);
+    return new Observable<CartItem[]>(observer => {
+      const unsubscribe = onValue(cartItemsRef, (snapshot) => {
+        const items: CartItem[] = [];
+        snapshot.forEach(childSnapshot => {
+          const itemData = childSnapshot.val();
+          // CORRECCIÓN CLAVE: Mapea y convierte explícitamente los tipos de datos
+          items.push({
+            ...itemData, // Copia todas las propiedades del objeto
+            // Asegúrate de que 'cantidad' sea un número
+            cantidad: parseInt(itemData.cantidad, 10),
+            // Asegúrate de que 'precio' sea un número
+            precio: parseFloat(itemData.precio)
+          });
+        });
+        observer.next(items);
+      }, (error) => {
+        observer.error(error);
+      });
+      return { unsubscribe: unsubscribe };
+    });
+  }
 
   /**
    * Agrega un ítem al carrito o actualiza su cantidad si ya existe.
