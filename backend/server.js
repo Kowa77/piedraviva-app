@@ -1,64 +1,58 @@
 // backend/server.js
 import express from 'express';
 import cors from 'cors';
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'; // Import Payment
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { initializeApp, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import dotenv from 'dotenv'; // Para cargar variables de entorno desde .env local
+import { getDatabase } from 'firebase-admin/database';
+import dotenv from 'dotenv';
 
-dotenv.config(); // Cargar variables de entorno al inicio
-
-// --- Inicialización de Firebase Admin SDK ---
-try {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-  initializeApp({
-    credential: cert(serviceAccount)
-  });
-  console.log('Firebase Admin SDK inicializado correctamente.');
-} catch (error) {
-  console.error('Error al inicializar Firebase Admin SDK. Asegúrate de que FIREBASE_SERVICE_ACCOUNT_KEY esté configurada correctamente:', error);
-  // No salir aquí en desarrollo, pero en producción podrías quererlo.
-}
-
-const db = getFirestore(); // Obtener la instancia de Firestore
-
-// --- Credenciales y URLs ---
-const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
-const client = new MercadoPagoConfig({ accessToken: MERCADOPAGO_ACCESS_TOKEN });
-
-// Define todos los orígenes (URLs) desde los cuales tu frontend puede acceder a este backend.
-const ALLOWED_FRONTEND_URLS = [
-  'https://kowa77.github.io',
-  'https://kowa77.github.io/piedraviva-app',
-  // Añade otros dominios si tu frontend se aloja en múltiples lugares
-];
-
-// La URL de tu frontend para las redirecciones post-pago de Mercado Pago
-const MERCADOPAGO_FRONTEND_REDIRECT_URL = process.env.FRONTEND_URL || 'https://kowa77.github.io/piedraviva-app/';
-
-// La URL de tu backend para que Mercado Pago envíe las notificaciones (webhooks/IPN)
-const BACKEND_PUBLIC_URL = process.env.BACKEND_URL || 'http://localhost:3000'; // Usa localhost para desarrollo
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de CORS
-app.use(cors({ origin: ALLOWED_FRONTEND_URLS }));
-app.use(express.json()); // Middleware para parsear JSON en el body de las peticiones
+// --- Inicialización de Firebase Admin SDK ---
+let db;
+try {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+  initializeApp({
+    credential: cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL
+  });
+  db = getDatabase();
+  console.log('INFO: Firebase Admin SDK y Realtime Database inicializados correctamente.');
+} catch (error) {
+  console.error('ERROR: Fallo al inicializar Firebase Admin SDK.', error);
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    console.error('ERROR: La variable de entorno FIREBASE_SERVICE_ACCOUNT_KEY no está definida.');
+  }
+}
 
-// --- Rutas ---
+// --- Configuración de Mercado Pago y URLs ---
+const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
+const WEBHOOK_URL = process.env.MERCADOPAGO_WEBHOOK_URL;
+const FRONTEND_URL = process.env.FRONTEND_URL;
 
-app.get('/', (req, res) => {
-  res.send('Mercado Pago Backend is running!');
+if (!MERCADOPAGO_ACCESS_TOKEN || !WEBHOOK_URL || !FRONTEND_URL) {
+  console.error('ERROR: Faltan variables de entorno cruciales (MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_WEBHOOK_URL, FRONTEND_URL).');
+}
+
+const client = new MercadoPagoConfig({
+  accessToken: MERCADOPAGO_ACCESS_TOKEN,
+  options: { timeout: 5000 }
 });
 
-// Endpoint para crear la preferencia de pago en Mercado Pago
+// Configuración de CORS y JSON middleware
+app.use(cors());
+app.use(express.json());
+
+// --- ENDPOINT: Para crear la preferencia de pago ---
 app.post('/create_preference', async (req, res) => {
+  console.log('INFO: Solicitud recibida en /create_preference');
   try {
-    // Esperamos un array de ítems del carrito y un userId (ID del usuario autenticado)
     const { items: cartItems, userId } = req.body;
 
-    // Validaciones iniciales
+    // Validaciones
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       return res.status(400).json({ error: 'El carrito de compras está vacío o no tiene el formato correcto.' });
     }
@@ -66,119 +60,87 @@ app.post('/create_preference', async (req, res) => {
       return res.status(400).json({ error: 'Se requiere un ID de usuario para crear la preferencia.' });
     }
 
-    // Mapeo de ítems del formato frontend al formato de Mercado Pago
     const formattedItems = cartItems.map(item => ({
-      title: item.title,
-      quantity: Number(item.quantity),
-      unit_price: Number(item.unit_price),
-      currency_id: "UYU", // Moneda uruguaya
+      title: item.nombre,
+      quantity: Number(item.cantidad),
+      unit_price: Number(item.precio),
+      currency_id: "UYU",
     }));
-
-    // Validación de datos numéricos y de texto de los ítems
-    const invalidItems = formattedItems.filter(item =>
-      !item.title || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unit_price) || item.unit_price <= 0
-    );
-
-    if (invalidItems.length > 0) {
-      return res.status(400).json({ error: 'Algunos ítems del carrito tienen datos inválidos (nombre, cantidad o precio).' });
-    }
 
     const body = {
       items: formattedItems,
-      back_urls: { // URLs a las que el usuario es redirigido después de la compra
-        success: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-success`,
-        failure: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-failure`,
-        pending: `${MERCADOPAGO_FRONTEND_REDIRECT_URL}/purchase-pending`
+      back_urls: {
+        success: `${FRONTEND_URL}/purchase-success`,
+        failure: `${FRONTEND_URL}/purchase-failure`,
+        pending: `${FRONTEND_URL}/purchase-pending`
       },
-      auto_return: "approved", // Redirigir automáticamente si el pago es aprobado
-      external_reference: userId, // Aquí guardamos el userId para recuperarlo en el webhook
-      // URL a la que Mercado Pago enviará las notificaciones de eventos de pago (IPN)
-      notification_url: `${BACKEND_PUBLIC_URL}/webhook/mercadopago`,
+      auto_return: "approved",
+      external_reference: userId,
+      notification_url: `${WEBHOOK_URL}/webhook/mercadopago`,
     };
 
     const preference = new Preference(client);
     const result = await preference.create({ body });
 
-    res.json({
-      id: result.id,
-      init_point: result.init_point // URL a la que el frontend redirigirá al usuario
-    });
-
+    console.log(`SUCCESS: Preferencia de Mercado Pago creada. ID: ${result.id}`);
+    res.json({ id: result.id, init_point: result.init_point });
   } catch (error) {
-    console.error('Error creando preferencia de pago:', error);
-
-    let errorMessage = 'Error al crear la preferencia de pago.';
-    let statusCode = 500;
-
-    if (error.status && error.message) {
-      errorMessage = `Error de Mercado Pago (${error.status}): ${error.message}`;
-      statusCode = error.status;
-    } else if (error.message) {
-      errorMessage = `Error interno del servidor: ${error.message}`;
-    }
-
-    res.status(statusCode).json({ error: errorMessage });
+    console.error('ERROR: Fallo al crear la preferencia de Mercado Pago.', error);
+    res.status(500).json({ error: 'Error interno del servidor al crear la preferencia.' });
   }
 });
 
-// Endpoint para recibir las notificaciones de Mercado Pago (Webhooks/IPN)
+// --- ENDPOINT: Para recibir las notificaciones de pago (webhook) ---
 app.post('/webhook/mercadopago', async (req, res) => {
-  console.log('--- Notificación de Mercado Pago (Webhook) Recibida ---');
-  console.log('Query Params:', req.query); // Contiene 'topic' y 'id'
-  console.log('Body (puede estar vacío para IPN):', req.body); // El cuerpo puede no ser relevante para IPN v1
-
-  const { topic, id } = req.query; // Para IPN v1, los parámetros clave están en la query
+  const { topic, id } = req.query;
+  console.log(`INFO: Webhook recibido. Tópico: ${topic}, ID de notificación: ${id}`);
 
   if (topic === 'payment') {
     try {
-      // Usar el SDK de Mercado Pago para obtener los detalles completos del pago
-      const paymentInstance = new Payment(client);
-      const paymentDetails = await paymentInstance.get({ id: id });
-
-      console.log('Detalles del Pago Obtenidos:', paymentDetails);
+      const payment = new Payment(client);
+      const paymentDetails = await payment.get({ id });
+      console.log(`INFO: Detalles del pago obtenidos. Estado: ${paymentDetails.status}, ID de pago: ${paymentDetails.id}`);
 
       if (paymentDetails.status === 'approved') {
-        const userId = paymentDetails.external_reference; // Recuperar el userId
-        const appId = process.env.APP_ID || 'default-app-id'; // Obtener el ID de la aplicación
+        const userId = paymentDetails.external_reference;
+        console.log(`SUCCESS: Pago aprobado para el usuario ${userId}. Guardando compra.`);
 
-        // Estructura de la compra a guardar en Firestore
+        // --- Guardar la compra en Realtime Database ---
         const purchaseData = {
           paymentId: paymentDetails.id,
           userId: userId,
-          items: paymentDetails.additional_info.items, // Los ítems asociados al pago
           transactionAmount: paymentDetails.transaction_amount,
           status: paymentDetails.status,
-          dateCreated: new Date(paymentDetails.date_created),
-          dateApproved: new Date(paymentDetails.date_approved),
-          preferenceId: paymentDetails.preference_id,
-          // Puedes añadir más campos relevantes aquí
+          dateApproved: new Date(paymentDetails.date_approved).toISOString(),
+          items: paymentDetails.additional_info.items || []
         };
 
-        // Ruta de Firestore para guardar compras de usuarios:
-        // /artifacts/{appId}/users/{userId}/purchases/{documentId}
-        const userPurchasesCollectionRef = db.collection(`artifacts/${appId}/users/${userId}/purchases`);
+        try {
+          // El método .push() crea una nueva entrada con un ID único
+          await db.ref(`purchases/${userId}`).push(purchaseData);
+          console.log(`SUCCESS: Compra ${paymentDetails.id} guardada en Realtime Database.`);
 
-        await userPurchasesCollectionRef.add(purchaseData); // Añadir un nuevo documento a la colección
-        console.log(`Compra ${paymentDetails.id} guardada para el usuario ${userId} en Firestore.`);
+          // --- Opcional: Vaciar el carrito en Realtime Database ---
+          await db.ref(`carts/${userId}/items`).remove();
+          console.log(`SUCCESS: Carrito del usuario ${userId} vaciado.`);
+        } catch (rtdbError) {
+          console.error('ERROR: Fallo al guardar en Realtime Database o vaciar el carrito.', rtdbError);
+        }
       } else {
-        console.log(`El pago ${paymentDetails.id} tiene estado ${paymentDetails.status}, no se guarda en el historial de compras.`);
+        console.log(`INFO: Pago no aprobado. Estado: ${paymentDetails.status}. No se realizarán acciones.`);
       }
-      res.sendStatus(200); // ES CRÍTICO responder con 200 OK para que Mercado Pago no reintente la notificación
+      res.sendStatus(200);
     } catch (error) {
-      console.error('Error al procesar el webhook de Mercado Pago:', error);
-      res.sendStatus(500); // Responder con 500 si hay un error en el procesamiento
+      console.error('ERROR: Fallo al procesar el webhook.', error);
+      res.sendStatus(500);
     }
   } else {
-    // Manejar otros tipos de notificaciones si es necesario (ej: 'merchant_order')
-    console.log(`Tipo de webhook no manejado: ${topic}`);
-    res.sendStatus(200); // Responder 200 para tipos no manejados para evitar reintentos innecesarios
+    console.log(`INFO: Webhook de tipo ${topic} ignorado.`);
+    res.sendStatus(200);
   }
 });
 
-
-// Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`Servidor de backend ejecutándose en http://localhost:${PORT}`);
-  console.log(`FRONTEND_URL: ${MERCADOPAGO_FRONTEND_REDIRECT_URL}`);
-  console.log(`BACKEND_URL (para webhooks): ${BACKEND_PUBLIC_URL}`);
+  console.log(`URL del webhook configurada: ${WEBHOOK_URL}`);
 });
