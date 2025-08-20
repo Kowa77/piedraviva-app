@@ -2,14 +2,14 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { Observable, Subscription, of, BehaviorSubject } from 'rxjs';
-import { switchMap, map, take } from 'rxjs/operators'; // Elimina 'first' si no lo usas
+import { switchMap, map, take } from 'rxjs/operators';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { CartItem } from '../../models/cart-item.model';
 import { Purchase } from '../../models/purchase.model';
-import { User } from '@angular/fire/auth'; // Asegúrate de que User esté importado
-import { environment } from '../../../environments/environment'; // Importa el archivo de entorno
-import { HttpClient } from '@angular/common/http'; // Importa HttpClient
+import { User } from '@angular/fire/auth';
+import { environment } from '../../../environments/environment';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-shopping-cart',
@@ -23,20 +23,16 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
   cartItems$: BehaviorSubject<CartItem[]> = new BehaviorSubject<CartItem[]>([]);
   totalAmount$: Observable<number>;
   currentUserSubscription: Subscription | undefined;
-  // user: User | null = null; // Puedes quitar esta propiedad si solo usas userId para la lógica
-  userId: string | null = null; // Mantén userId para las llamadas a servicios
+  userId: string | null = null;
   showPurchaseHistoryButton: boolean = false;
-
-  // ¡IMPORTANTE! Declara la propiedad 'cart' aquí
   cart: CartItem[] = [];
-
   private editedQuantities: Map<string, number> = new Map();
 
   constructor(
     private cartService: CartService,
-    private authService: AuthService, // Inyecta AuthService
+    private authService: AuthService,
     private router: Router,
-    private http: HttpClient // Inyecta HttpClient
+    private http: HttpClient
   ) {
     this.totalAmount$ = this.cartItems$.pipe(
       map(items => {
@@ -50,10 +46,8 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUserSubscription = this.authService.user$.pipe(
-      // Utilizamos un observable para manejar el estado del carrito
       switchMap(user => {
-        this.userId = user ? user.uid : null; // Asigna el UID del usuario
-        // Ya no asignamos this.user = user aquí, si no lo necesitas para otras lógicas
+        this.userId = user ? user.uid : null;
         console.log('ShoppingCartComponent: User ID after auth state change:', this.userId);
 
         if (this.userId) {
@@ -61,13 +55,11 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
           return this.cartService.getCart(this.userId);
         } else {
           this.showPurchaseHistoryButton = false;
-          return of([]); // Si no hay usuario, el carrito está vacío
+          return of([]);
         }
       }),
       map((items: CartItem[]) => {
-        // Asegúrate de que 'cartItems$' emite los ítems y también actualiza 'this.cart'
-        // para que la función payWithMercadoPago tenga la data más reciente.
-        this.cart = items; // <-- Importante: Actualiza la propiedad 'cart'
+        this.cart = items;
         this.editedQuantities.clear();
         console.log('ShoppingCartComponent: Cart received (raw items) from service and processed:', items);
         return items;
@@ -84,10 +76,6 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     this.cartItems$.complete();
   }
 
-  /**
-   * Checks if the user has a purchase history to show the button.
-   * @param userId The user's UID.
-   */
   private checkPurchaseHistory(userId: string): void {
     this.cartService.getPurchaseHistory(userId).pipe(
       take(1),
@@ -101,11 +89,6 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Calculates the total amount of the cart.
-   * @param items Current items in the cart.
-   * @returns The total amount.
-   */
   private calculateTotal(items: CartItem[]): number {
     console.log('calculateTotal: Receiving items to sum:', items);
     return items.reduce((sum, item) => {
@@ -119,12 +102,6 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  /**
-   * Handles the change in the quantity input for a cart item.
-   * Stores the edited value temporarily and updates the input visually.
-   * @param item The cart item being edited.
-   * @param event The input change event.
-   */
   onQuantityChange(item: CartItem, event: Event): void {
     const inputElement = event.target as HTMLInputElement;
     const nuevoValorString = inputElement.value.trim();
@@ -154,11 +131,6 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Handles the blur event of the quantity input, saving changes if they exist.
-   * @param item The cart item that lost focus.
-   * @param event The blur event.
-   */
   onQuantityBlur(item: CartItem, event: Event): void {
     const inputElement = event.target as HTMLInputElement;
     const value = inputElement.value.trim();
@@ -183,11 +155,6 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Increments the quantity of an item in the cart.
-   * Updates the BehaviorSubject and the edited quantities map.
-   * @param item The cart item to increment.
-   */
   incrementQuantity(item: CartItem): void {
     let currentQuantity = this.editedQuantities.get(item.id);
     if (currentQuantity === undefined) {
@@ -208,11 +175,6 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     console.log(`ShoppingCartComponent: Quantity of "${item.nombre}" incremented to ${newQuantity} (locally).`);
   }
 
-  /**
-   * Decrements the quantity of an item in the cart.
-   * Updates the BehaviorSubject and the edited quantities map.
-   * @param item The cart item to decrement.
-   */
   decrementQuantity(item: CartItem): void {
     let currentQuantity = this.editedQuantities.get(item.id);
     if (currentQuantity === undefined) {
@@ -241,20 +203,11 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Checks if a cart item has an edited quantity (pending save).
-   * @param item The cart item.
-   * @returns True if the quantity has been edited, false otherwise.
-   */
   hasEditedQuantity(item: CartItem): boolean {
     const editedValue = this.editedQuantities.get(item.id);
     return editedValue !== undefined && editedValue !== item.cantidad;
   }
 
-  /**
-   * Saves the quantity edited for an item to the database.
-   * @param item The cart item to save.
-   */
   async saveQuantity(item: CartItem): Promise<void> {
     if (!this.userId || !item.id) {
       alert('Error: No se pudo identificar al usuario o al producto.');
@@ -296,10 +249,6 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Removes an item from the cart.
-   * @param item The cart item to remove.
-   */
   async removeItem(item: CartItem): Promise<void> {
     if (!this.userId || !item.id) {
       alert('Error: No se pudo identificar al usuario o al producto para eliminar.');
@@ -317,9 +266,6 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Proceeds to the checkout process.
-   */
   async checkout(): Promise<void> {
     if (!this.userId) {
       alert('Debes iniciar sesión para completar la compra.');
@@ -349,38 +295,53 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Navigates to the purchase history page.
-   */
   viewPurchaseHistory(): void {
     this.router.navigate(['/purchase-history']);
   }
 
   /**
    * Initiates the payment process with Mercado Pago.
+   * Ensures data is valid and correctly formatted before sending to the backend.
    */
   payWithMercadoPago(): void {
-    // La validación debería usar this.userId en lugar de this.user directamente.
-    // Además, 'this.cart' se actualiza en el subscribe del ngOnInit
-    if (!this.userId || this.cart.length === 0) {
-      console.error('El usuario no está autenticado o el carrito está vacío.');
-      // Opcional: Podrías redirigir al login si !this.userId
-      if (!this.userId) {
-        alert('Debes iniciar sesión para completar la compra.');
-        this.router.navigate(['/login']); // Redirige al login si no hay userId
-      } else {
-        alert('Tu carrito está vacío. Agrega productos para continuar.');
-      }
+    if (!this.userId) {
+      alert('Debes iniciar sesión para completar la compra.');
+      this.router.navigate(['/login']);
       return;
     }
 
+    // Use this.cart to ensure we have the latest state from ngOnInit
+    if (!this.cart || this.cart.length === 0) {
+      alert('Tu carrito está vacío. Agrega productos para continuar.');
+      return;
+    }
+
+    // Validate cart items before sending them
+    const validItems = this.cart.map(item => {
+        // Ensure name is a string, quantity is a positive number, and price is a positive number
+        const quantity = Number(item.cantidad);
+        const price = Number(item.precio);
+
+        if (!item.nombre || isNaN(quantity) || quantity <= 0 || isNaN(price) || price <= 0) {
+            console.error('Error de validación en el frontend: ', item);
+            return null; // Return null for invalid items
+        }
+
+        return {
+            title: item.nombre,
+            quantity: quantity,
+            unit_price: price,
+        };
+    }).filter(item => item !== null); // Filter out any invalid items
+
+    if (validItems.length === 0) {
+        alert('Hubo un error con los productos en tu carrito. Por favor, intenta de nuevo.');
+        return;
+    }
+
     const body = {
-      items: this.cart.map(item => ({
-        title: item.nombre,
-        quantity: item.cantidad,
-        unit_price: item.precio
-      })),
-      userId: this.userId, // Usa this.userId que ya está actualizado
+      items: validItems,
+      userId: this.userId,
     };
 
     const backendUrl = environment.backendUrl;
@@ -391,13 +352,17 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
           window.location.href = response.init_point;
         } else {
           console.error('No se recibió la URL de pago de Mercado Pago.');
+          alert('Ocurrió un error al procesar tu pago. No se pudo obtener la URL de Mercado Pago.');
         }
       },
       error: (error) => {
         console.error('Error al crear la preferencia de pago:', error);
-        alert('Ocurrió un error al procesar tu pago con Mercado Pago. Por favor, inténtalo de nuevo.');
+        if (error.status === 400 && error.error && error.error.error) {
+            alert(`Error de validación del carrito: ${error.error.error}`);
+        } else {
+            alert('Ocurrió un error al procesar tu pago con Mercado Pago. Por favor, inténtalo de nuevo.');
+        }
       }
     });
   }
 }
-
