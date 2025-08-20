@@ -132,3 +132,12 @@ backend/coverage
 backend/tsconfig.spec.json
 backend/test.ts
 
+# Archivos de configuración de Firebase
+backend/piedraviva-20327-firebase-adminsdk-fbsvc-09566cf2a6.json
+
+# Archivos de configuración de Firebase para piedraviva-app
+piedraviva-app/piedraviva-20327-firebase-adminsdk-fbsvc-09566cf2a6.json
+
+# Archivos de configuración de Firebase para backend
+piedraviva-app/backend/piedraviva-20327-firebase-adminsdk-fbsvc-09566cf2a6.json
+
