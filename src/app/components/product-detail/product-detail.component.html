@@ -31,8 +31,9 @@
               <h2 class="product-detail-name">{{ product.nombre }}</h2>
               <p class="product-detail-description">{{ product.descripcion }}</p>
 
-              @if (isPizza(product) && product.sabores.length) { <!-- Corregido: .length en lugar de ?.length -->
-                <div class="product-detail-flavors">
+              <!-- Muestra los sabores solo si el producto es una pizza -->
+              @if (isPizza(product)) {
+                <div class="product-flavor-tags">
                   @for (sabor of product.sabores; track $index) {
                     <span class="product-flavor-tag-detail">{{ sabor }}</span>
                   }

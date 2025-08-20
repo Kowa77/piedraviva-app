@@ -8,15 +8,18 @@ import { CartService } from '../../services/cart.service'; // Importa el CartSer
 import { AuthService } from '../../services/auth.service'; // Importa el AuthService
 import { Product } from '../../models/product.model'; // Importa el modelo Product
 import { FormsModule } from '@angular/forms'; // Necesario para ngModel en el input de cantidad
+import { onSnapshot } from '@firebase/firestore'; // Asegúrate de que esto esté aquí si se usa
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, CurrencyPipe, FormsModule], // Asegura FormsModule
+  imports: [CommonModule, RouterLink, CurrencyPipe, FormsModule],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.css'
 })
 export class ProductDetailComponent implements OnInit, OnDestroy {
+  // CORRECCIÓN: product$ ahora se inicializa directamente en el constructor,
+  // por lo que ya no necesita el operador de aserción '!'
   product$: Observable<Product | undefined>;
   loading: boolean = true;
   errorMessage: string | null = null;
@@ -30,96 +33,84 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     private cartService: CartService,
     private authService: AuthService
   ) {
-    this.product$ = of(undefined); // Inicializa a undefined
-  }
+    // CORRECCIÓN CLAVE: Inicializamos product$ en el constructor
+    this.product$ = this.route.paramMap.pipe(
+      map(params => params.get('id')),
+      switchMap(id => {
+        // Reiniciamos los estados de carga y error antes de cada nueva solicitud
+        this.loading = true;
+        this.errorMessage = null;
 
-  ngOnInit(): void {
-    // Primero, obtenemos el ID del usuario
-    this.userSubscription = this.authService.user$.pipe(
-      switchMap(user => {
-        this.userId = user ? user.uid : null;
-        console.log('ProductDetailComponent: User ID after auth state change:', this.userId);
-        // Luego, obtenemos el ID del producto de la ruta
-        return this.route.paramMap;
-      }),
-      switchMap(params => {
-        const id = params.get('id');
-        if (id) {
-          this.loading = true; // Empieza a cargar el producto
-          return this.productService.getProductById(id).pipe(
-            map(product => {
-              this.loading = false; // Finaliza la carga
-              if (product) {
-                this.selectedQuantity = 1; // Inicializa la cantidad a 1 cuando se carga el producto
-              }
-              return product;
-            }),
-            catchError(error => {
-              console.error('Error al cargar los detalles del producto:', error);
-              this.loading = false;
-              this.errorMessage = 'No se pudo cargar la información del producto.';
-              return of(undefined); // Retorna undefined en caso de error
-            })
-          );
-        } else {
+        if (!id) {
           this.loading = false;
           this.errorMessage = 'ID de producto no proporcionado.';
-          return of(undefined); // No hay ID, no hay producto
+          return of(undefined);
         }
+
+        return this.productService.getProductById(id).pipe(
+          map(product => {
+            this.loading = false;
+            // Si se encuentra el producto, establece la cantidad inicial en 1
+            if (product) {
+              this.selectedQuantity = 1;
+            }
+            return product;
+          }),
+          catchError(error => {
+            this.loading = false;
+            this.errorMessage = 'Error al cargar el producto. Por favor, inténtelo de nuevo más tarde.';
+            console.error('Error al cargar el producto:', error);
+            return of(undefined);
+          })
+        );
       })
-    ).subscribe(
-      product => {
-        // La asignación a this.product$ se hace en el pipe con el operador map,
-        // esta suscripción es solo para activar el flujo y manejar el estado.
-        // Si necesitas hacer algo con el producto aquí (ej. logs finales), puedes hacerlo.
-        console.log('ProductDetailComponent: Producto cargado:', product);
-      },
-      error => {
-        console.error('ProductDetailComponent: Error en la suscripción principal:', error);
-      }
     );
   }
 
+  ngOnInit(): void {
+    // Suscribirse para obtener el ID del usuario
+    this.userSubscription = this.authService.user$.subscribe(user => {
+      this.userId = user ? user.uid : null;
+    });
+  }
+
   ngOnDestroy(): void {
+    // Limpiar la suscripción para evitar fugas de memoria
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
   }
 
   /**
-   * Incrementa la cantidad seleccionada para añadir al carrito.
+   * Maneja el cambio de cantidad desde el input del usuario.
+   * @param event El evento de entrada.
+   */
+  onQuantityInputChange(event: Event): void {
+    const inputElement = event.target as HTMLInputElement;
+    const value = parseInt(inputElement.value, 10);
+    if (!isNaN(value) && value >= 0) {
+      this.selectedQuantity = value;
+    }
+  }
+
+  /**
+   * Incrementa la cantidad seleccionada.
    */
   incrementQuantity(): void {
     this.selectedQuantity++;
   }
 
   /**
-   * Decrementa la cantidad seleccionada para añadir al carrito, sin ir por debajo de 1.
+   * Decrementa la cantidad seleccionada, asegurándose de que no sea negativa.
    */
   decrementQuantity(): void {
-    if (this.selectedQuantity > 1) {
+    if (this.selectedQuantity > 0) {
       this.selectedQuantity--;
     }
   }
 
   /**
-   * Maneja el cambio directo en el input de cantidad.
-   * Valida que la nueva cantidad sea un número válido y no menor que 0.
-   * @param event El evento del input.
-   */
-  onQuantityInputChange(event: Event): void {
-    const inputElement = event.target as HTMLInputElement;
-    const newQuantity = parseInt(inputElement.value, 10);
-    if (!isNaN(newQuantity) && newQuantity >= 0) {
-      this.selectedQuantity = newQuantity;
-    } else {
-      this.selectedQuantity = 1; // Restablece a 1 si es inválido
-      inputElement.value = '1';
-    }
-  }
-
-  /**
-   * Añade el producto al carrito.
+   * Añade el producto actual al carrito del usuario.
    * @param product El producto a añadir.
    */
   async addToCart(product: Product): Promise<void> {

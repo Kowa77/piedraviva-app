@@ -14,12 +14,12 @@ import {
   providedIn: 'root'
 })
 export class AuthService {
-  // Renombramos 'user$' a 'currentUser' para que coincida con el componente.
-  // Es un Observable que emite el estado de autenticación del usuario.
-  currentUser: Observable<User | null>;
+  // Observable que emite el estado de autenticación del usuario (null si no logueado, User si logueado)
+  public user$: Observable<User | null>;
 
   constructor(private auth: Auth) {
-    this.currentUser = authState(this.auth);
+    // authState() es un observable de AngularFire que emite el usuario actual.
+    this.user$ = authState(this.auth);
   }
 
   /**

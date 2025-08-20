@@ -1,8 +1,12 @@
-/* src/app/components/product-detail/product-detail.component.css */
+/* src/app/components/pizza-list/pizza-list.component.css */
 
-.detail-main-container {
+/* Importa la fuente "Pacifico" de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
+/* Contenedor principal de la aplicacion */
+.main-container {
   min-height: 100vh;
-  background-color: #1a202c; /* bg-gray-900 */
+  background-color: #ece9cd; /* bg-gray-900 */
   color: #e2e8f0; /* text-gray-100 */
   padding: 2rem;
   font-family: sans-serif;
@@ -10,132 +14,204 @@
   -moz-osx-font-smoothing: grayscale;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center; /* Centra el contenido horizontalmente */
 }
 
-.detail-content-wrapper {
-  max-width: 960px; /* Ancho máximo para el detalle */
+.content-wrapper {
+  max-width: 1280px; /* max-w-7xl */
   width: 100%;
-  margin: 0 auto;
+  margin: 0 auto; /* Centra el wrapper */
   background-color: #2d3748; /* bg-gray-800 */
-  border-radius: 0.5rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-2xl */
   overflow: hidden;
-  padding: 2rem;
-  position: relative; /* Para posicionar el botón de volver */
 }
 
-.back-button-container {
-  margin-bottom: 1.5rem;
+/* Encabezado del Menu */
+.menu-header {
+  background-color: #c53030; /* bg-red-700 */
+  color: #fff;
+  padding: 1.5rem; /* p-6 */
+  text-align: center;
+  font-size: 3.5rem; /* Aumenta el tamano de la fuente para la nueva tipografia */
+  font-weight: normal; /* La fuente Pacifico no necesita negrita extra */
+  letter-spacing: 0.05em; /* tracking-wide */
+  text-transform: none; /* Desactiva uppercase para que la fuente se vea como es */
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+  margin-bottom: 2rem; /* mb-8 */
+  font-family: 'Pacifico', cursive; /* Aplica la nueva fuente */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Anade una sombra al texto para que resalte */
 }
 
-.back-button {
-  display: inline-block;
-  background-color: #4a5568; /* bg-gray-700 */
-  color: #e2e8f0; /* text-gray-100 */
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
+/* REMOVIDO: Estilos para el contenedor del logo en la lista de pizzas */
+/* .company-logo-container-list {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
 }
 
-.back-button:hover {
-  background-color: #64748b; /* bg-gray-600 */
-}
-
-.product-detail-card {
-  display: flex;
-  flex-direction: column; /* Por defecto, en columna para móviles */
-  gap: 2rem;
-}
-
-@media (min-width: 768px) { /* md: */
-  .product-detail-card {
-    flex-direction: row; /* En fila para pantallas más grandes */
-    align-items: flex-start;
-  }
-}
-
-.product-detail-image-container {
-  flex-shrink: 0; /* Evita que la imagen se encoja */
-  width: 100%;
-  max-width: 400px; /* Ancho máximo para la imagen */
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-}
-
-.product-detail-image {
-  width: 100%;
+.company-logo-list {
+  max-width: 180px;
   height: auto;
-  display: block;
+  display: inline-block;
+  border-radius: 0.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+} */
+
+/* Contenedor principal para el efecto de perspectiva */
+.pizza-grid-container {
+  perspective: 1500px; /* Define la profundidad para los elementos 3D */
+  padding: 2rem; /* p-8 */
 }
 
-.product-detail-info {
-  flex-grow: 1; /* Permite que la información ocupe el espacio restante */
+/* Estilos para la cuadricula de pizzas */
+.pizza-grid {
+  display: grid;
+  /* Define columnas responsivas: 1 columna en pantallas pequenas, 2 en sm, 3 en lg, 4 en xl */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem; /* gap-8 */
+  justify-items: center; /* Centra los items dentro de cada celda de la cuadricula */
+}
+
+/* Estilos para cada tarjeta de pizza (ahora con clase pizza-card-3d) */
+.pizza-card-3d {
+  position: relative;
+  transform-style: preserve-3d; /* Permite que los elementos hijos se posicionen en 3D */
+  transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.5s ease; /* Transiciones suaves */
+  border: 2px solid #4a5568; /* Borde sutil */
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); /* Sombra inicial */
+  display: flex; /* Para asegurar que el contenido se estire */
+  flex-direction: column; /* Contenido en columna */
+  background-color: #2d3748; /* bg-gray-800 */
+  border-radius: 0.75rem; /* rounded-xl */
+  overflow: hidden;
+  width: 100%; /* Asegura que la tarjeta ocupe el ancho de su celda en la cuadricula */
+  max-width: 320px; /* Limita el ancho maximo de la tarjeta para un mejor diseno */
+  padding-bottom: 11rem; /* AUMENTADO: Espacio extra para la seccion de cantidad y boton, ahora apilados */
+}
+
+/* Efecto hover 3D (modificado para zoom) */
+.pizza-card-3d:hover {
+  transform: scale(1.05); /* Hace zoom en la tarjeta */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); /* Sombra mas pronunciada al hacer hover */
+  z-index: 10; /* Eleva la tarjeta sobre las demas al hacer hover */
+}
+
+/* Asegura que el enlace (contenido de la tarjeta) ocupe casi todo el espacio */
+.pizza-card-link-content {
   display: flex;
   flex-direction: column;
+  height: 100%; /* Ocupa la mayor parte de la altura de la tarjeta */
+  text-decoration: none;
+  color: inherit;
+  padding-bottom: 1rem; /* Espacio entre el contenido y la seccion de cantidad */
 }
 
-.product-detail-name {
-  font-size: 2.5rem; /* text-4xl */
-  font-weight: 800; /* font-extrabold */
-  color: #f6e05e; /* text-yellow-400 */
-  margin-bottom: 1rem;
+/* Estilos de la imagen de la pizza */
+.pizza-image {
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+  background-size: cover;
+  background-position: center;
+  display: block;
+  min-height: 192px; /* h-48 */
+  width: 100%;
 }
 
-.product-detail-description {
-  font-size: 1.125rem; /* text-lg */
-  color: #a0aec0; /* text-gray-300 */
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-}
-
-.product-detail-flavors {
+/* Estilos para el texto y detalles dentro de la tarjeta */
+.pizza-details {
+  padding: 1.5rem; /* p-6 */
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem; /* gap-3 */
-  margin-bottom: 2rem;
+  flex-direction: column;
+  flex-grow: 1; /* Permite que el contenido se estire */
 }
 
-.product-flavor-tag-detail {
-  background-color: #e53e3e; /* bg-red-600 */
-  color: #fff;
+.pizza-name {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 700; /* font-bold */
+  color: #fff; /* text-white */
+  margin-bottom: 0.5rem; /* mb-2 */
+  line-height: 1.2;
+}
+
+.pizza-description {
+  color: #a0aec0; /* text-gray-300 */
+  margin-bottom: 1rem; /* mb-4 */
   font-size: 0.875rem; /* text-sm */
-  font-weight: 600;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px; /* rounded-full */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  flex-grow: 1; /* Permite que la descripcion ocupe espacio si es larga */
+  height: 4rem; /* h-16, for consistent height */
+  overflow: hidden; /* Oculta el texto extra */
 }
 
-.product-detail-price-section {
+.pizza-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 1.5rem;
-  border-top: 1px solid #4a5568; /* border-gray-700 */
-  margin-top: auto; /* Empuja al final del contenedor */
+  margin-top: auto; /* Empuja el footer hacia abajo */
+  padding-top: 1rem; /* pt-4 */
+  border-top: 1px solid #4a5568; /* border-t border-gray-700 */
 }
 
-.product-detail-price {
-  font-size: 3rem; /* text-5xl */
-  font-weight: 800;
+.pizza-price {
+  font-size: 1.875rem; /* text-3xl */
+  font-weight: 800; /* font-extrabold */
   color: #f6e05e; /* text-yellow-400 */
 }
 
-/* Controles de Cantidad (repetidos del product-list para consistencia) */
-.add-to-cart-controls {
+.pizza-flavors {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem; /* gap-2 */
+  justify-content: flex-end; /* justify-end */
+}
+
+.pizza-flavor-tag {
+  background-color: #e53e3e; /* bg-red-600 */
+  color: #fff; /* text-white */
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 600; /* font-semibold */
+  padding: 0.25rem 0.5rem; /* px-2 py-1 */
+  border-radius: 9999px; /* rounded-full */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-md */
+  white-space: nowrap; /* Evita que los sabores se rompan en varias lineas */
+}
+
+/* Seccion de Cantidad y Boton "Agregar al Carrito" */
+.add-to-cart-section {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* Cambiado a columna */
+  align-items: center; /* Centra los items horizontalmente */
+  padding: 0.75rem 1.5rem; /* Espaciado */
+  background-color: #2d3748; /* Fondo igual que la tarjeta */
+  border-top: 1px solid #4a5568; /* Borde superior */
+  border-bottom-left-radius: 0.75rem;
+  border-bottom-right-radius: 0.75rem;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Sombra superior */
+  transform: translateZ(1px); /* Asegura que este en el mismo plano 3D */
+  gap: 0.75rem; /* Espacio entre el input y el boton */
+  box-sizing: border-box; /* AÑADIDO: Incluye padding y border en el ancho total */
+}
+
+/* Contenedor para los botones de cantidad y el input */
+.quantity-controls {
+  display: flex; /* Hace que los botones y el input se alineen horizontalmente */
   align-items: center;
-  gap: 0.5rem;
+  /* No hay 'gap' aquí para que los elementos se peguen */
+  margin-bottom: 0.5rem; /* Espacio debajo de los controles de cantidad */
+  width: 100%;
+  justify-content: center; /* Centra todo el bloque de cantidad */
 }
 
 .quantity-button {
   background-color: #4a5568; /* Gris oscuro */
   color: #fff;
-  border: none;
-  border-radius: 0.25rem;
+  border: 1px solid #4a5568; /* Añade borde para que coincida con el input */
+  /* Se eliminó el border-radius general, se aplicarán específicos */
   width: 35px;
   height: 35px;
   font-size: 1.2rem;
@@ -145,106 +221,130 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0; /* Evita que el botón se encoja */
 }
 
-.quantity-button:hover {
-  background-color: #64748b; /* Gris más claro al pasar el ratón */
+/* border-radius específico para el botón de decremento (extremo izquierdo) */
+.quantity-button.minus-button {
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none; /* Elimina el borde interno para que se fusione con el input */
+}
+
+/* border-radius específico para el botón de incremento (extremo derecho) */
+.quantity-button.plus-button {
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: none; /* Elimina el borde interno para que se fusione con el input */
 }
 
 .quantity-input {
-  width: 60px; /* Ancho ajustado */
+  width: 60px; /* Ancho ajustado para el input de cantidad */
   padding: 0.5rem;
-  border: 1px solid #4a5568;
-  border-radius: 0.375rem;
-  background-color: #2d3748; /* Fondo similar al card */
+  border: 1px solid #4a5568; /* Mantiene los bordes verticales */
+  border-radius: 0; /* Sin bordes redondeados en el medio */
+  background-color: #1a202c;
   color: #e2e8f0;
   font-size: 1rem;
   text-align: center;
+  appearance: textfield; /* Propiedad estándar para compatibilidad */
   -moz-appearance: textfield; /* Para Firefox */
+  box-sizing: border-box; /* Añadido para incluir padding y border en el ancho */
 }
 
+/* Ocultar flechas en Chrome, Safari, Edge, Opera */
 .quantity-input::-webkit-outer-spin-button,
 .quantity-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-.add-button {
+/* Estilos para el boton "Agregar al Carrito" (Ajustado para parecerse al anterior "Encargar") */
+.add-to-cart-button {
+  width: 100%; /* El boton ocupa todo el ancho disponible en la columna */
   background-color: #f6e05e; /* Un amarillo vibrante */
   color: #1a202c; /* Texto oscuro para contraste */
-  padding: 0.6rem 1.2rem;
+  padding: 0.75rem 1.5rem; /* Espaciado aumentado */
   border: none;
-  border-radius: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 700;
+  border-radius: 0.5rem; /* Bordes redondeados */
+  font-size: 1.125rem; /* Tamaño de fuente aumentado */
+  font-weight: 700; /* Negrita */
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.1s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra */
+  box-sizing: border-box; /* Añadido para incluir padding y border en el ancho */
 }
 
-.add-button:hover {
+.add-to-cart-button:hover {
   background-color: #ecc94b; /* Un amarillo un poco más oscuro al pasar el ratón */
-  transform: translateY(-1px);
+  transform: translateZ(5px); /* Pequeño efecto de elevación (como el antiguo) */
 }
 
-.add-button:active {
-  transform: translateY(0);
+.add-to-cart-button:active {
+  transform: translateZ(0px) scale(0.98); /* Efecto de "presionado" (como el antiguo) */
 }
 
 
-/* Mensajes de carga y no encontrado */
-.loading-message-detail,
-.not-found-message {
+/* Estilos para los estados de carga y sin pizzas */
+.loading-message,
+.no-pizzas-message {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 300px; /* Altura mínima para el mensaje */
-  background-color: #2d3748;
-  color: #a0aec0;
-  font-size: 1.25rem;
-  border-radius: 0.5rem;
+  min-height: 50vh;
+  background-color: #2d3748; /* bg-gray-800 */
+  color: #a0aec0; /* text-gray-300 */
+  font-size: 1.25rem; /* text-xl */
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .detail-content-wrapper {
-    padding: 1rem;
+  .menu-header {
+    font-size: 2.8rem;
   }
-  .product-detail-name {
-    font-size: 2rem;
+  .pizza-grid {
+    grid-template-columns: 1fr; /* Una columna en pantallas pequeñas */
   }
-  .product-detail-price {
-    font-size: 2.2rem;
+  .pizza-card-3d {
+    margin: 0 auto; /* Centrar tarjetas */
+    max-width: 350px; /* Limitar ancho en móvil */
   }
-  .product-detail-image-container {
-    max-width: 100%; /* Permite que la imagen ocupe todo el ancho en móviles */
-  }
-  .add-to-cart-controls {
+  .add-to-cart-section {
     flex-wrap: wrap; /* Permite que los elementos se envuelvan */
     justify-content: center;
-    width: 100%; /* Ocupa todo el ancho */
   }
-  .quantity-button, .quantity-input, .add-button {
-    flex-grow: 1; /* Permite que los botones y el input se estiren */
-    max-width: unset; /* Elimina límite de ancho si lo hubiera */
+  .quantity-button,
+  .quantity-input {
+    flex-shrink: 0; /* Evita que se encojan demasiado */
   }
-  .add-button {
-    margin-top: 0.5rem; /* Espacio extra para el botón cuando está envuelto */
+  .add-to-cart-button {
+    margin-top: 1rem; /* Espacio superior cuando se envuelve */
+    margin-left: 0; /* Elimina el margen a la izquierda si se envuelve */
   }
 }
 
 @media (max-width: 480px) {
-  .product-detail-name {
-    font-size: 1.8rem;
+  .menu-header {
+    font-size: 2.2rem;
   }
-  .product-detail-price {
-    font-size: 1.8rem;
+  .content-wrapper {
+    padding: 1rem;
   }
-  .product-detail-description {
-    font-size: 1rem;
+  .pizza-details {
+    padding: 1rem;
   }
-  .product-flavor-tag-detail {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.8rem;
+  .pizza-name {
+    font-size: 1.5rem;
+  }
+  .pizza-price {
+    font-size: 1.2rem;
+  }
+  .add-to-cart-button {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
   }
 }
