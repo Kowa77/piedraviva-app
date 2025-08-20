@@ -276,52 +276,49 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Proceeds to the checkout process by creating a Mercado Pago preference.
-   */
-  async checkout(): Promise<void> {
-    if (!this.userId) {
-      alert('Debes iniciar sesión para completar la compra.');
-      return;
-    }
-
-    const currentCartItems = this.cartItems$.getValue();
-    if (currentCartItems.length === 0) {
-      alert('Tu carrito está vacío. Agrega productos antes de comprar.');
-      return;
-    }
-
-    // Prepara los ítems para enviarlos al backend de Mercado Pago
-    // Mercado Pago espera 'title', 'quantity', 'unit_price'
-    const itemsForMercadoPago = currentCartItems.map(item => ({
-      title: item.nombre,
-      quantity: item.cantidad,
-      unit_price: item.precio,
-      // No necesitamos 'currency_id' aquí, el backend lo añade
-    }));
-
-    try {
-      // Llama a tu backend de Mercado Pago para crear la preferencia
-      const response = await this.http.post<{ id: string, init_point: string }>(
-        this.mercadoPagoBackendUrl,
-        { items: itemsForMercadoPago }
-      ).toPromise(); // Convertir Observable a Promesa
-
-      if (response && response.init_point) {
-        console.log('Mercado Pago Preference created:', response.id);
-        console.log('Redirecting to:', response.init_point);
-        // Redirige al usuario al checkout de Mercado Pago
-        window.location.href = response.init_point;
-      } else {
-        alert('Error al iniciar el pago con Mercado Pago: No se recibió un punto de inicio válido.');
-        console.error('Mercado Pago Backend response missing init_point:', response);
-      }
-    } catch (error) {
-      console.error('Error al crear la preferencia de Mercado Pago:', error);
-      alert('Ocurrió un error al procesar tu pago con Mercado Pago. Por favor, inténtalo de nuevo.');
-    }
+// CORRECTED checkout() method
+async checkout(): Promise<void> {
+  if (!this.userId) {
+    alert('Debes iniciar sesión para completar la compra.');
+    return;
   }
 
+  const currentCartItems = this.cartItems$.getValue();
+  if (currentCartItems.length === 0) {
+    alert('Tu carrito está vacío. Agrega productos antes de comprar.');
+    return;
+  }
+
+  const itemsForMercadoPago = currentCartItems.map(item => ({
+    title: item.nombre,
+    quantity: item.cantidad,
+    unit_price: item.precio,
+  }));
+
+  try {
+    const requestBody = {
+      items: itemsForMercadoPago,
+      userId: this.userId  // <-- THIS IS THE MISSING PIECE!
+    };
+
+    const response = await this.http.post<{ id: string, init_point: string }>(
+      this.mercadoPagoBackendUrl,
+      requestBody // <-- Use the new object that includes the userId
+    ).toPromise();
+
+    if (response && response.init_point) {
+      console.log('Mercado Pago Preference created:', response.id);
+      console.log('Redirecting to:', response.init_point);
+      window.location.href = response.init_point;
+    } else {
+      alert('Error al iniciar el pago con Mercado Pago: No se recibió un punto de inicio válido.');
+      console.error('Mercado Pago Backend response missing init_point:', response);
+    }
+  } catch (error) {
+    console.error('Error al crear la preferencia de Mercado Pago:', error);
+    alert('Ocurrió un error al procesar tu pago con Mercado Pago. Por favor, inténtalo de nuevo.');
+  }
+}
   /**
    * Navigates to the purchase history page.
    */
