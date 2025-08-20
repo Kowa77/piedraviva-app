@@ -46,6 +46,11 @@ const client = new MercadoPagoConfig({
 app.use(cors());
 app.use(express.json());
 
+// A simple GET endpoint to confirm the server is running
+app.get('/', (req, res) => {
+  res.status(200).send('Mercado Pago Backend is running!');
+});
+
 // --- ENDPOINT: Para crear la preferencia de pago ---
 app.post('/create_preference', async (req, res) => {
   console.log('INFO: Solicitud recibida en /create_preference');
