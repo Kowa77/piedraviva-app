@@ -11,7 +11,7 @@
     @if (cartItems$ | async; as items) {
       @if (items.length > 0) {
         <div class="cart-items-grid">
-          @for (item of items; track item.id) { <!-- CAMBIADO: de item.pizzaId a item.id -->
+          @for (item of items; track item.id) {
             <div class="cart-item-card">
               <img [src]="item.imagenUrl || 'https://placehold.co/100x100/FF5733/FFFFFF?text=Producto'"
                    [alt]="item.nombre"
@@ -21,12 +21,9 @@
                 <p class="item-price">{{ item.precio | currency:'UYU':'$':'1.2-2' }}</p>
               </div>
               <div class="item-controls">
-                <!-- Controles de cantidad unificados (similar a product-list) -->
+                <!-- Controles de cantidad que llaman a los métodos del componente -->
                 <button (click)="decrementQuantity(item)" class="quantity-button minus-button">-</button>
-                <input
-                  type="number" min="0" [value]="item.cantidad === 0 ? '' : item.cantidad"
-                  (input)="onQuantityChange(item, $event)" (blur)="onQuantityBlur(item, $event)"
-                  class="item-quantity-input" />
+                <span class="item-quantity">{{ item.cantidad }}</span>
                 <button (click)="incrementQuantity(item)" class="quantity-button plus-button">+</button>
 
                 <button (click)="removeItem(item)" class="remove-item-button">Eliminar</button>
@@ -42,7 +39,6 @@
             <span class="total-amount">{{ (totalAmount$ | async) | currency:'UYU':'$':'1.2-2' }}</span>
           </div>
           <button class="pay-button" (click)="payWithMercadoPago()">Comprar Ahora</button>
-          <!-- <button (click)="checkout()" class="checkout-button">Comprar Ahora</button> -->
         </div>
 
       } @else {
@@ -56,13 +52,5 @@
         <p>Cargando tu carrito...</p>
       </div>
     }
-
-    <!-- Botón de Ver Historial de Compras (aparece después de una compra o si hay historial previo) -->
-    @if (showPurchaseHistoryButton) {
-      <div class="purchase-history-button-container">
-        <button (click)="viewPurchaseHistory()" class="view-history-button">Ver Historial de Compras</button>
-      </div>
-    }
-
   </div>
 </div>

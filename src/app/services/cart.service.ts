@@ -34,11 +34,7 @@ export class CartService {
       onValue(cartItemsRef, (snapshot) => {
         const items: CartItem[] = [];
         snapshot.forEach(childSnapshot => {
-          const itemData = childSnapshot.val();
-          items.push({
-            id: childSnapshot.key || '',
-            ...itemData
-          } as CartItem);
+          items.push({ ...childSnapshot.val(), id: childSnapshot.key || '' } as CartItem);
         });
         observer.next(items);
       }, (error) => {
@@ -47,106 +43,94 @@ export class CartService {
     });
   }
 
+  // Corregimos los nombres de los métodos para que coincidan con el componente.
+  // También usamos las funciones modulares de Realtime Database.
+
   /**
-   * Agrega o actualiza un ítem (producto) en el carrito del usuario.
-   * El parámetro 'product' ahora es de tipo Product, no Pizza.
+   * Agrega un item al carrito o incrementa su cantidad.
    * @param userId El UID del usuario.
-   * @param product El producto (pizza o bebida) a agregar.
-   * @param quantity La cantidad a agregar.
-   * @returns Una Promesa que se resuelve con la cantidad total del ítem en el carrito después de la operación.
+   * @param item El item del carrito a agregar o modificar.
    */
-  async addItemToCart(userId: string, product: Product, quantity: number): Promise<number> {
-    if (!userId) {
-      throw new Error('No hay usuario logueado para agregar al carrito.');
-    }
-
-    const itemRef = ref(this.db, `carts/${userId}/items/${product.id}`);
-    const snapshot = await get(itemRef); // Usamos 'get' para una lectura única
-
-    let finalQuantity: number;
-    let itemToSave: CartItem;
-
-    if (snapshot.exists()) {
-      const currentItem = snapshot.val();
-      finalQuantity = currentItem!.cantidad + quantity;
-      // Actualiza solo la cantidad; las otras propiedades ya están en el carrito
-      itemToSave = { ...currentItem!, cantidad: finalQuantity } as CartItem;
-    } else {
-      finalQuantity = quantity;
-      itemToSave = {
-        id: product.id,
-        nombre: product.nombre,
-        precio: product.precio,
-        cantidad: finalQuantity,
-        imagenUrl: product.imagenUrl,
-        descripcion: product.descripcion,
-        tipo: product.tipo
-      } as CartItem;
-    }
-    await set(itemRef, itemToSave); // Usamos 'set' para establecer o sobrescribir el ítem
-    return finalQuantity;
+  addItem(userId: string, item: CartItem): void {
+    if (!userId) { return; }
+    const itemRef = ref(this.db, `carts/${userId}/items/${item.id}`);
+    onValue(itemRef, (snapshot) => {
+      const currentItem = snapshot.val() as CartItem;
+      const newQuantity = currentItem ? currentItem.cantidad + item.cantidad : item.cantidad;
+      set(itemRef, { ...item, cantidad: newQuantity });
+    }, { onlyOnce: true });
   }
 
   /**
-   * Actualiza la cantidad de un ítem específico en el carrito.
+   * Incrementa la cantidad de un item en el carrito.
    * @param userId El UID del usuario.
-   * @param itemId El ID del ítem en el carrito (que es el ID del producto).
-   * @param newQuantity La nueva cantidad.
-   * @returns Una Promesa que se resuelve cuando la operación se completa.
+   * @param item El item del carrito a incrementar.
    */
-  async updateItemQuantity(userId: string, itemId: string, newQuantity: number): Promise<void> {
-    if (!userId) {
-      throw new Error('No hay usuario logueado para actualizar el carrito.');
-    }
-    if (newQuantity <= 0) {
-      await this.removeItemFromCart(userId, itemId); // Si la cantidad es 0 o menos, elimina el ítem
-      return;
-    }
-
-    const itemRef = ref(this.db, `carts/${userId}/items/${itemId}`);
-    await update(itemRef, { cantidad: newQuantity }); // Usamos 'update'
+  incrementQuantity(userId: string, item: CartItem): void {
+    if (!userId) { return; }
+    const itemRef = ref(this.db, `carts/${userId}/items/${item.id}`);
+    onValue(itemRef, (snapshot) => {
+      const currentItem = snapshot.val() as CartItem;
+      if (currentItem) {
+        update(itemRef, { cantidad: currentItem.cantidad + 1 });
+      }
+    }, { onlyOnce: true });
   }
 
   /**
-   * Elimina un ítem del carrito del usuario.
+   * Decrementa la cantidad de un item en el carrito.
    * @param userId El UID del usuario.
-   * @param itemId El ID del ítem a eliminar del carrito.
-   * @returns Una Promesa que se resuelve cuando la operación se completa.
+   * @param item El item del carrito a decrementar.
    */
-  async removeItemFromCart(userId: string, itemId: string): Promise<void> {
-    if (!userId) {
-      throw new Error('No hay usuario logueado para modificar el carrito.');
-    }
-    const itemRef = ref(this.db, `carts/${userId}/items/${itemId}`);
-    await remove(itemRef); // Usamos 'remove'
+  decrementQuantity(userId: string, item: CartItem): void {
+    if (!userId) { return; }
+    const itemRef = ref(this.db, `carts/${userId}/items/${item.id}`);
+    onValue(itemRef, (snapshot) => {
+      const currentItem = snapshot.val() as CartItem;
+      if (currentItem && currentItem.cantidad > 1) {
+        update(itemRef, { cantidad: currentItem.cantidad - 1 });
+      } else if (currentItem && currentItem.cantidad === 1) {
+        remove(itemRef);
+      }
+    }, { onlyOnce: true });
+  }
+
+  /**
+   * Elimina un item del carrito.
+   * @param userId El UID del usuario.
+   * @param item El item del carrito a eliminar.
+   */
+  removeItem(userId: string, item: CartItem): void {
+    if (!userId) { return; }
+    const itemRef = ref(this.db, `carts/${userId}/items/${item.id}`);
+    remove(itemRef);
   }
 
   /**
    * Vacía el carrito del usuario.
    * @param userId El UID del usuario.
-   * @returns Una Promesa que se resuelve cuando la operación se completa.
    */
-  async clearCart(userId: string): Promise<void> {
-    if (!userId) {
-      throw new Error('No hay usuario logueado para vaciar el carrito.');
-    }
+  clearCart(userId: string): void {
+    if (!userId) { return; }
     const cartRef = ref(this.db, `carts/${userId}/items`);
-    await remove(cartRef); // Usamos 'remove'
+    remove(cartRef);
   }
 
   /**
-   * Registra una compra en la base de datos.
-   * @param userId El UID del usuario que realiza la compra.
-   * @param cartItems Los ítems del carrito en el momento de la compra.
-   * @param total El total de la compra.
-   * @returns Una Promesa que se resuelve al registrar la compra.
+   * Agrega una nueva compra a la colección 'purchases' de Firestore.
+   * @param userId El UID del usuario.
+   * @param cartItems Los items del carrito en el momento de la compra.
+   * @param total El monto total de la compra.
+   * @returns Una promesa que se resuelve al guardar la compra.
    */
-  async recordPurchase(userId: string, cartItems: CartItem[], total: number): Promise<any> {
+  recordPurchase(userId: string, cartItems: CartItem[], total: number): Promise<any> {
+    // Este método ya no es necesario aquí porque el backend lo maneja.
+    // Lo mantengo solo si decides usarlo para otra cosa en el frontend.
     if (!userId) {
       throw new Error('No hay usuario logueado para registrar la compra.');
     }
     const purchasesListRef = ref(this.db, `purchases/${userId}`);
-    const newPurchaseRef = push(purchasesListRef); // Usamos 'push' para obtener una nueva clave
+    const newPurchaseRef = push(purchasesListRef);
 
     const purchaseData: Purchase = {
       purchaseId: newPurchaseRef.key || '',
@@ -156,35 +140,6 @@ export class CartService {
       timestamp: new Date().toISOString()
     };
 
-    await set(newPurchaseRef, purchaseData); // Usamos 'set'
-    return purchaseData;
-  }
-
-  /**
-   * Obtiene el historial de compras de un usuario específico.
-   * @param userId El UID del usuario.
-   * @returns Un Observable que emite un array de objetos Purchase.
-   */
-  getPurchaseHistory(userId: string): Observable<Purchase[]> {
-    if (!userId) {
-      return of([]);
-    }
-    const purchasesRef = ref(this.db, `purchases/${userId}`);
-
-    return new Observable<Purchase[]>(observer => {
-      onValue(purchasesRef, (snapshot) => {
-        const purchases: Purchase[] = [];
-        snapshot.forEach(childSnapshot => {
-          const purchaseData = childSnapshot.val();
-          purchases.push({
-            purchaseId: childSnapshot.key || '',
-            ...purchaseData
-          } as Purchase);
-        });
-        observer.next(purchases);
-      }, (error) => {
-        observer.error(error);
-      });
-    });
+    return set(newPurchaseRef, purchaseData);
   }
 }

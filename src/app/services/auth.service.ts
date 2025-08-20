@@ -14,12 +14,12 @@ import {
   providedIn: 'root'
 })
 export class AuthService {
-  // Observable que emite el estado de autenticación del usuario (null si no logueado, User si logueado)
-  user$: Observable<User | null>;
+  // Renombramos 'user$' a 'currentUser' para que coincida con el componente.
+  // Es un Observable que emite el estado de autenticación del usuario.
+  currentUser: Observable<User | null>;
 
   constructor(private auth: Auth) {
-    // authState() es un observable de AngularFire que emite el usuario actual.
-    this.user$ = authState(this.auth);
+    this.currentUser = authState(this.auth);
   }
 
   /**
@@ -50,5 +50,3 @@ export class AuthService {
     return signOut(this.auth);
   }
 }
-// Este servicio maneja la autenticación de usuarios utilizando Firebase Authentication.
-// Proporciona métodos para registrar, iniciar sesión y cerrar sesión, y expone un observable
