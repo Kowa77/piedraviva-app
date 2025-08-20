@@ -14,7 +14,8 @@ backend/
 
 # IDE y editores (Visual Studio Code)
 .vscode/            # Ignora las configuraciones de VS Code
-
+.vscode
+piedraviva-app/.vscode/
 # Build artifacts
 /build
 /out
