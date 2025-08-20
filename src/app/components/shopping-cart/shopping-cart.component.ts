@@ -43,6 +43,7 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
       switchMap(user => {
         if (user) {
           this.userId = user.uid;
+          // Asume que getCart es un método existente en CartService que devuelve un Observable
           return this.cartService.getCart(user.uid);
         } else {
           this.userId = null;
@@ -63,18 +64,21 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
 
   incrementQuantity(item: CartItem): void {
     if (this.userId) {
+      // Asume que incrementQuantity es un método existente en CartService
       this.cartService.incrementQuantity(this.userId, item);
     }
   }
 
   decrementQuantity(item: CartItem): void {
     if (this.userId) {
+      // Asume que decrementQuantity es un método existente en CartService
       this.cartService.decrementQuantity(this.userId, item);
     }
   }
 
   removeItem(item: CartItem): void {
     if (this.userId) {
+      // Asume que removeItem es un método existente en CartService
       this.cartService.removeItem(this.userId, item);
     }
   }
