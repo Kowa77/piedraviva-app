@@ -6,7 +6,7 @@ import { routes } from './app.routes';
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { getDatabase, provideDatabase } from '@angular/fire/database';
 import { getAuth, provideAuth } from '@angular/fire/auth';
-import { environment } from '../../environments/environment';
+import { environment } from '../environments/environment';
 import { CartService } from './services/cart.service';
 
 // Importaciones para localización de moneda

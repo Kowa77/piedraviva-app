@@ -41,7 +41,8 @@
             <span>Total:</span>
             <span class="total-amount">{{ (totalAmount$ | async) | currency:'UYU':'$':'1.2-2' }}</span>
           </div>
-          <button (click)="checkout()" class="checkout-button">Comprar Ahora</button>
+          <button class="pay-button" (click)="payWithMercadoPago()">Comprar Ahora</button>
+          <!-- <button (click)="checkout()" class="checkout-button">Comprar Ahora</button> -->
         </div>
 
       } @else {
