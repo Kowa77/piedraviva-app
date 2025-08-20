@@ -74,8 +74,8 @@ app.post('/create_preference', async (req, res) => {
     // Mapeo de ítems del formato frontend al formato de Mercado Pago
     const formattedItems = cartItems.map(item => ({
       title: item.nombre, // Asegurarse que el nombre del item se mapee a 'title'
-      quantity: Number(item.cantidad), // Asegurarse que la cantidad sea Number
-      unit_price: Number(item.precio), // Asegurarse que el precio sea Number
+      quantity: Number(item.quantity), // Asegurarse que la cantidad sea Number
+      unit_price: Number(item.unit_price), // Asegurarse que el precio sea Number
       currency_id: "UYU", // Moneda uruguaya
       // Agrega aquí otras propiedades si Mercado Pago las soporta o si son útiles para el webhook
       // Por ejemplo, el ID del producto original si lo necesitas en el webhook
