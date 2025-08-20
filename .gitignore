@@ -31,6 +31,62 @@ src/environments/
 .env
 .env.local
 .env.*.local
+piedraviva-app/environments/
+piedraviva-app/environments/environments.ts
+piedraviva-app/environments/environment.prod.ts
+piedraviva-app/environments/environment.ts
+piedraviva-app/environments/environment.local.ts
+piedraviva-app/environments/environment.*.local.ts
+
+# Archivos de configuración de backend
+backend/.env
+backend/.env.local
+backend/.env.*.local
+piedraviva-app/.env
+piedraviva-app/.env.local
+piedraviva-app/.env.*.local
+piedraviva-app/backend/.env
+piedraviva-app/backend/.env.local
+piedraviva-app/backend/.env.*.local
+
+# Archivos de configuración de pruebas
+/coverage
+/karma.conf.js
+/jest.config.js
+/jest.setup.js
+/tsconfig.spec.json
+/test.ts
+
+# Archivos de configuración de producción
+/prod.env
+/prod.env.local
+/prod.env.*.local
+/prod.backend.env
+/prod.backend.env.local
+/prod.backend.env.*.local
+/prod.piedraviva-app.env
+/prod.piedraviva-app.env.local
+/prod.piedraviva-app.env.*.local
+/prod.piedraviva-app.backend.env
+/prod.piedraviva-app.backend.env.local
+/prod.piedraviva-app.backend.env.*.local
+# Archivos de configuración de desarrollo
+/dev.env
+/dev.env.local
+/dev.env.*.local
+/dev.backend.env
+/dev.backend.env.local
+/dev.backend.env.*.local
+/dev.piedraviva-app.env
+/dev.piedraviva-app.env.local
+/dev.piedraviva-app.env.*.local
+/dev.piedraviva-app.backend.env
+/dev.piedraviva-app.backend.env.local
+/dev.piedraviva-app.backend.env.*.local
+
+
+
+
 
 # Historial de Git local
 .git-history
@@ -53,3 +109,21 @@ ehthumbs.db
 .project
 .classpath
 .settings/
+
+
+backend/node_modules
+backend/dist
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend/.cache/
+backend/.eslintcache
+backend/.stylelintcache
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+backend/.npm
+backend/coverage
+backend/tsconfig.spec.json
+backend/test.ts
+
