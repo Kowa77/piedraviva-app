@@ -176,9 +176,8 @@ app.post('/webhook/mercadopago', async (req, res) => {
           timestamp: new Date().toISOString(), // Fecha de la compra
           status: paymentDetails.status, // 'approved'
           paymentMethod: paymentDetails.payment_type_id, // e.g., 'credit_card'
-          installments: paymentDetails.installments, // Cantidad de cuotas
-          // CORRECCIÓN: Proporciona un valor por defecto si preference_id es null o undefined
-          preferenceId: paymentDetails.preference_id || '' // <-- CORRECCIÓN AQUÍ
+          installments: paymentDetails.installments // Cantidad de cuotas
+          // Se eliminó preferenceId: paymentDetails.preference_id || '', ya que causa errores de undefined en Firestore
         };
 
         // --- Guardar en Firestore ---
